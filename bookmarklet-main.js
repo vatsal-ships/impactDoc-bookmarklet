@@ -11,38 +11,150 @@ window.initImpactDoc = function() {
     const SCOPES = 'https://www.googleapis.com/auth/documents';
 
     let gapiInited = false;
-    let masterDocId = localStorage.getItem('browserPageImpact_docId');
     let isAuthenticated = false;
+    let masterDocId; // Will be set after cookie functions are defined
     
-    // Check for stored authentication token
-    function getStoredToken() {
-        const tokenData = localStorage.getItem('browserPageImpact_token');
-        if (!tokenData) return null;
-        
+    // Simple encryption/decryption for token storage
+    function simpleEncrypt(text) {
+        return btoa(text.split('').map(char => 
+            String.fromCharCode(char.charCodeAt(0) ^ 123)
+        ).join(''));
+    }
+    
+    function simpleDecrypt(encrypted) {
         try {
-            const parsed = JSON.parse(tokenData);
-            const now = Date.now();
-            
-            // Check if token is expired (with 5 minute buffer)
-            if (parsed.expiresAt && now >= (parsed.expiresAt - 300000)) {
-                localStorage.removeItem('browserPageImpact_token');
-                return null;
-            }
-            
-            return parsed;
+            return atob(encrypted).split('').map(char => 
+                String.fromCharCode(char.charCodeAt(0) ^ 123)
+            ).join('');
         } catch (e) {
-            localStorage.removeItem('browserPageImpact_token');
             return null;
         }
     }
     
-    // Store authentication token
+    // Cross-domain storage using popup communication
+    function requestStoredData() {
+        return new Promise((resolve) => {
+            const popup = window.open('https://vatsal-ships.github.io/impactDoc-bookmarklet/storage-helper.html', 'storage-helper', 'width=1,height=1,left=-1000,top=-1000');
+            
+            const messageHandler = (event) => {
+                if (event.origin !== 'https://vatsal-ships.github.io') {
+                    return;
+                }
+                
+                if (event.data.type === 'storage-data') {
+                    window.removeEventListener('message', messageHandler);
+                    if (popup && !popup.closed) {
+                        popup.close();
+                    }
+                    resolve(event.data.data);
+                }
+            };
+            
+            window.addEventListener('message', messageHandler);
+            
+            // Timeout after 3 seconds
+            setTimeout(() => {
+                window.removeEventListener('message', messageHandler);
+                if (popup && !popup.closed) {
+                    popup.close();
+                }
+                resolve(null);
+            }, 3000);
+        });
+    }
+    
+    function storeDataCrossDomain(data) {
+        const popup = window.open('https://vatsal-ships.github.io/impactDoc-bookmarklet/storage-helper.html', 'storage-helper', 'width=1,height=1,left=-1000,top=-1000');
+        
+        setTimeout(() => {
+            if (popup && !popup.closed) {
+                popup.postMessage({
+                    type: 'store-data',
+                    data: data
+                }, 'https://vatsal-ships.github.io');
+                
+                setTimeout(() => {
+                    if (popup && !popup.closed) {
+                        popup.close();
+                    }
+                }, 500);
+            }
+        }, 100);
+    }
+    
+    // Check for stored authentication token (cross-domain)
+    async function getStoredToken() {
+        try {
+            // Try to get data from cross-domain storage
+            const storedData = await requestStoredData();
+            if (storedData && storedData.token) {
+                const now = Date.now();
+                
+                // Check if token is expired (with 5 minute buffer)
+                if (storedData.token.expiresAt && now >= (storedData.token.expiresAt - 300000)) {
+                    return null;
+                }
+                
+                return storedData.token;
+            }
+        } catch (e) {
+            console.log('Cross-domain storage not available, using localStorage');
+        }
+        
+        // Fallback to localStorage (same domain)
+        const localToken = localStorage.getItem('browserPageImpact_token');
+        if (localToken) {
+            try {
+                const parsed = JSON.parse(localToken);
+                const now = Date.now();
+                
+                // Check if token is expired (with 5 minute buffer)
+                if (parsed.expiresAt && now >= (parsed.expiresAt - 300000)) {
+                    localStorage.removeItem('browserPageImpact_token');
+                    return null;
+                }
+                
+                return parsed;
+            } catch (e) {
+                localStorage.removeItem('browserPageImpact_token');
+            }
+        }
+        
+        return null;
+    }
+    
+    // Store authentication token (cross-domain and localStorage)
     function storeToken(token, expiresIn) {
         const tokenData = {
             access_token: token,
             expiresAt: Date.now() + (expiresIn * 1000) // Convert seconds to milliseconds
         };
+        
+        // Store in cross-domain storage
+        const dataToStore = {
+            token: tokenData,
+            docId: masterDocId
+        };
+        storeDataCrossDomain(dataToStore);
+        
+        // Also store in localStorage (fallback)
         localStorage.setItem('browserPageImpact_token', JSON.stringify(tokenData));
+    }
+    
+    // Initialize masterDocId (will be loaded from cross-domain storage)
+    async function initializeMasterDocId() {
+        try {
+            const storedData = await requestStoredData();
+            if (storedData && storedData.docId) {
+                masterDocId = storedData.docId;
+                return;
+            }
+        } catch (e) {
+            console.log('Cross-domain storage not available for docId');
+        }
+        
+        // Fallback to localStorage
+        masterDocId = localStorage.getItem('browserPageImpact_docId');
     }
     
     // Handle token expiration
@@ -50,6 +162,13 @@ window.initImpactDoc = function() {
         localStorage.removeItem('browserPageImpact_token');
         gapi.client.setToken('');
         isAuthenticated = false;
+        
+        // Clear from cross-domain storage
+        const dataToStore = {
+            token: null,
+            docId: masterDocId // Keep the document ID
+        };
+        storeDataCrossDomain(dataToStore);
         
         contentSection.style.display = 'none';
         setupSection.style.display = 'none';
@@ -345,10 +464,13 @@ window.initImpactDoc = function() {
         });
     }
 
-    function maybeEnableButtons() {
+    async function maybeEnableButtons() {
         if (gapiInited) {
+            // Initialize masterDocId first
+            await initializeMasterDocId();
+            
             // Check if we have a valid stored token
-            const storedToken = getStoredToken();
+            const storedToken = await getStoredToken();
             if (storedToken) {
                 // Set the token in gapi client
                 gapi.client.setToken({
@@ -446,6 +568,13 @@ window.initImpactDoc = function() {
 
             masterDocId = docId;
             localStorage.setItem('browserPageImpact_docId', docId);
+            
+            // Store in cross-domain storage
+            const dataToStore = {
+                token: await getStoredToken(),
+                docId: docId
+            };
+            storeDataCrossDomain(dataToStore);
             setupSection.style.display = 'none';
             contentSection.style.display = 'block';
             showStatus('Document connected successfully!');
@@ -666,6 +795,13 @@ window.initImpactDoc = function() {
     function changeDocument() {
         masterDocId = null;
         localStorage.removeItem('browserPageImpact_docId');
+        
+        // Clear from cross-domain storage
+        const dataToStore = {
+            token: null,
+            docId: null
+        };
+        storeDataCrossDomain(dataToStore);
         contentSection.style.display = 'none';
         setupSection.style.display = 'block';
         document.getElementById('doc-id-input').value = '';
@@ -682,6 +818,13 @@ window.initImpactDoc = function() {
         // Clear stored token
         localStorage.removeItem('browserPageImpact_token');
         isAuthenticated = false;
+        
+        // Clear from cross-domain storage
+        const dataToStore = {
+            token: null,
+            docId: null
+        };
+        storeDataCrossDomain(dataToStore);
         
         authSection.style.display = 'block';
         setupSection.style.display = 'none';

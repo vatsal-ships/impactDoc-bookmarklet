@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Helper</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Simple encryption/decryption for token storage
+        function simpleEncrypt(text) {
+            return btoa(text.split('').map(char => 
+                String.fromCharCode(char.charCodeAt(0) ^ 123)
+            ).join(''));
+        }
+        
+        function simpleDecrypt(encrypted) {
+            try {
+                return atob(encrypted).split('').map(char => 
+                    String.fromCharCode(char.charCodeAt(0) ^ 123)
+                ).join('');
+            } catch (e) {
+                return null;
+            }
+        }
+        
+        // Listen for storage requests
+        window.addEventListener('message', (event) => {
+            // Only accept messages from bookmarklet domains
+            const allowedOrigins = [
+                'https://vatsal-ships.github.io',
+                'http://localhost:8002',
+                'http://localhost:8001',
+                'http://localhost:8000'
+            ];
+            
+            if (!allowedOrigins.includes(event.origin) && !event.origin.startsWith('http')) {
+                return;
+            }
+            
+            if (event.data.type === 'store-data') {
+                // Store the data in localStorage (encrypted)
+                if (event.data.data) {
+                    const encrypted = simpleEncrypt(JSON.stringify(event.data.data));
+                    localStorage.setItem('browserPageImpact_crossDomain', encrypted);
+                } else {
+                    // Clear storage if data is null
+                    localStorage.removeItem('browserPageImpact_crossDomain');
+                }
+            }
+        });
+        
+        // Send stored data immediately when page loads
+        window.addEventListener('load', () => {
+            try {
+                const encrypted = localStorage.getItem('browserPageImpact_crossDomain');
+                let data = null;
+                
+                if (encrypted) {
+                    const decrypted = simpleDecrypt(encrypted);
+                    if (decrypted) {
+                        data = JSON.parse(decrypted);
+                        
+                        // Check if token is expired
+                        if (data && data.token && data.token.expiresAt) {
+                            const now = Date.now();
+                            if (now >= (data.token.expiresAt - 300000)) {
+                                // Token expired, clear it
+                                data.token = null;
+                                localStorage.removeItem('browserPageImpact_crossDomain');
+                            }
+                        }
+                    }
+                }
+                
+                // Send data back to opener
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'storage-data',
+                        data: data
+                    }, '*');
+                }
+            } catch (e) {
+                // Send null if there's any error
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'storage-data',
+                        data: null
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
