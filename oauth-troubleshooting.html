@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Troubleshooting Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f8fafc;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .error-box {
+            background: #fed7d7;
+            border: 1px solid #feb2b2;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 14px;
+            color: #c53030;
+        }
+        .solution {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .step {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+            padding-left: 60px;
+        }
+        .step-number {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #4299e1;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .code {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fffbeb;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #92400e;
+        }
+        .checklist {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .checklist input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .checklist label {
+            display: block;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 OAuth Configuration Troubleshooting</h1>
+        <p>Fix Google OAuth redirect_uri_mismatch errors for ImpactDoc</p>
+    </div>
+
+    <div class="card">
+        <h2>🚨 Current Error</h2>
+        <div class="error-box">
+Error 400: redirect_uri_mismatch
+
+You can't sign in to this app because it doesn't comply with Google's OAuth 2.0 policy.
+
+If you're the app developer, register the JavaScript origin in the Google Cloud Console.
+Request details: origin=https://vatsal-ships.github.io 
+redirect_uri=storagerelay://https/vatsal-ships.github.io?id=auth558915
+        </div>
+
+        <h3>🔍 What This Means</h3>
+        <p>Google's OAuth system is rejecting the authentication request because:</p>
+        <ul>
+            <li><strong>JavaScript Origin</strong> not registered: <code>https://vatsal-ships.github.io</code></li>
+            <li><strong>Redirect URI</strong> not allowed: <code>storagerelay://https/vatsal-ships.github.io</code></li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>✅ Complete Solution</h2>
+        
+        <div class="solution">
+            <h3>🎯 Quick Fix Summary</h3>
+            <p>You need to add <strong>both</strong> JavaScript origins and redirect URIs to your Google Cloud OAuth configuration.</p>
+        </div>
+
+        <div class="step">
+            <div class="step-number">1</div>
+            <h3>Access Google Cloud Console</h3>
+            <p>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></p>
+            <p>Navigate to: <strong>APIs & Services</strong> → <strong>Credentials</strong></p>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <h3>Find Your OAuth Client</h3>
+            <p>Look for OAuth 2.0 Client ID:</p>
+            <div class="code">267135613225-0q6672a1dl8f3bd1dg123ea2lf1b2er9.apps.googleusercontent.com</div>
+            <p>Click on it to edit the configuration.</p>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <h3>Add JavaScript Origins</h3>
+            <p>In the <strong>Authorized JavaScript origins</strong> section, click <strong>ADD URI</strong> and add:</p>
+            <div class="code">https://vatsal-ships.github.io</div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">4</div>
+            <h3>Add Redirect URIs</h3>
+            <p>In the <strong>Authorized redirect URIs</strong> section, click <strong>ADD URI</strong> and add these URIs:</p>
+            <div class="code">https://vatsal-ships.github.io</div>
+            <div class="code">storagerelay://https/vatsal-ships.github.io</div>
+            <div class="code">https://vatsal-ships.github.io/</div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">5</div>
+            <h3>Save and Wait</h3>
+            <p>Click <strong>Save</strong> and wait 5-10 minutes for changes to propagate globally.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Verification Checklist</h2>
+        <div class="checklist">
+            <label><input type="checkbox"> Google Cloud Console accessed</label>
+            <label><input type="checkbox"> OAuth client found and opened for editing</label>
+            <label><input type="checkbox"> JavaScript origin <code>https://vatsal-ships.github.io</code> added</label>
+            <label><input type="checkbox"> Redirect URI <code>https://vatsal-ships.github.io</code> added</label>
+            <label><input type="checkbox"> Redirect URI <code>storagerelay://https/vatsal-ships.github.io</code> added</label>
+            <label><input type="checkbox"> Configuration saved</label>
+            <label><input type="checkbox"> Waited 5-10 minutes for propagation</label>
+            <label><input type="checkbox"> Tested bookmarklet on GitHub Pages</label>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔄 Alternative Solutions</h2>
+
+        <h3>Option 1: Create New OAuth Credentials</h3>
+        <div class="warning">
+            <strong>If you don't have access to the existing OAuth client:</strong>
+            <p>You can create your own OAuth credentials and update the bookmarklet code.</p>
+        </div>
+
+        <h3>Option 2: Use Different Domain</h3>
+        <p>If you control a different domain, you can:</p>
+        <ul>
+            <li>Host the bookmarklet on your own domain</li>
+            <li>Add that domain to the OAuth configuration</li>
+        </ul>
+
+        <h3>Option 3: Test with Localhost</h3>
+        <p>For development/testing, localhost is automatically allowed:</p>
+        <div class="code">http://localhost:8002</div>
+    </div>
+
+    <div class="card">
+        <h2>🧪 Testing After Configuration</h2>
+        
+        <h3>1. Clear Browser Cache</h3>
+        <p>Clear your browser cache or use incognito mode to ensure fresh OAuth tokens.</p>
+
+        <h3>2. Test the Bookmarklet</h3>
+        <ol>
+            <li>Visit <a href="https://vatsal-ships.github.io/impactDoc-bookmarklet/" target="_blank">GitHub Pages</a></li>
+            <li>Drag the bookmarklet to your bookmarks bar</li>
+            <li>Visit any website (e.g., google.com)</li>
+            <li>Click the bookmarklet</li>
+            <li>Try to sign in with Google</li>
+        </ol>
+
+        <h3>3. Expected Behavior</h3>
+        <div class="solution">
+            <p><strong>Success:</strong> Google OAuth popup appears and allows you to sign in</p>
+            <p><strong>Still failing:</strong> Check the checklist above or wait longer for propagation</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🛠️ Advanced Troubleshooting</h2>
+
+        <h3>Check OAuth Configuration</h3>
+        <p>Verify your OAuth client has these exact settings:</p>
+        <div class="code">
+Application type: Web application
+Authorized JavaScript origins:
+  - https://vatsal-ships.github.io
+
+Authorized redirect URIs:
+  - https://vatsal-ships.github.io
+  - https://vatsal-ships.github.io/
+  - storagerelay://https/vatsal-ships.github.io
+        </div>
+
+        <h3>Browser Console Debugging</h3>
+        <p>Open browser developer tools (F12) and check the Console tab for detailed error messages.</p>
+
+        <h3>OAuth Consent Screen</h3>
+        <p>Ensure your OAuth consent screen is properly configured with:</p>
+        <ul>
+            <li>App name</li>
+            <li>User support email</li>
+            <li>Developer contact information</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>📞 Still Need Help?</h2>
+        <p>If you're still experiencing issues after following this guide:</p>
+        <ul>
+            <li>Double-check all URIs for typos</li>
+            <li>Wait up to 24 hours for full propagation</li>
+            <li>Try testing from a different browser or device</li>
+            <li>Verify you have the correct Google Cloud project selected</li>
+        </ul>
+
+        <div class="warning">
+            <h4>⚠️ Important Notes</h4>
+            <ul>
+                <li>Changes can take 5 minutes to several hours to take effect</li>
+                <li>Make sure you're editing the correct OAuth client</li>
+                <li>Both JavaScript origins AND redirect URIs are required</li>
+                <li>URIs are case-sensitive and must match exactly</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html> 
