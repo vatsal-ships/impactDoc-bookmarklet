@@ -4,7 +4,7 @@ A powerful bookmarklet that lets you quickly add entries to your Google Docs tra
 
 ## 🚀 Live Demo & Installation
 
-**👉 [Install the Bookmarklet](https://vatsalpatel.github.io/browser-page-impact/)**
+**👉 [Install the Bookmarklet](https://vatsal-ships.github.io/impactDoc-bookmarklet/)**
 
 Simply drag the bookmarklet button from the installation page to your bookmarks bar - no setup required! The bookmarklet will connect to **your own private Google Doc** that only you can access.
 
@@ -40,7 +40,7 @@ Simply drag the bookmarklet button from the installation page to your bookmarks 
    - The ID is the long string in: `docs.google.com/document/d/DOCUMENT_ID/edit`
 
 2. **Install the Bookmarklet**
-   - Visit the [installation page](https://vatsalpatel.github.io/browser-page-impact/)
+   - Visit the [installation page](https://vatsal-ships.github.io/impactDoc-bookmarklet/)
    - Drag the bookmarklet button to your bookmarks bar
 
 3. **First Use**
@@ -93,7 +93,7 @@ browser-page-impact/
 
 ```bash
 # Clone the repository
-git clone https://github.com/vatsalpatel/browser-page-impact.git
+git clone https://github.com/vatsal-ships/impactDoc-bookmarklet.git
 cd browser-page-impact
 
 # Start local server for testing
@@ -183,7 +183,7 @@ Perfect for tracking:
 
 ### Using This Public Version
 
-**For most users**: Just use the public version at `https://vatsalpatel.github.io/browser-page-impact/` - no setup required!
+**For most users**: Just use the public version at `https://vatsal-ships.github.io/impactDoc-bookmarklet/` - no setup required!
 
 ### Custom Domain
 
@@ -211,8 +211,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 🐛 [Report Issues](https://github.com/vatsalpatel/browser-page-impact/issues)
-- 💬 [Discussions](https://github.com/vatsalpatel/browser-page-impact/discussions)
+- 🐛 [Report Issues](https://github.com/vatsal-ships/impactDoc-bookmarklet/issues)
+- 💬 [Discussions](https://github.com/vatsal-ships/impactDoc-bookmarklet/discussions)
 - 📧 Email: support@vatsalpatel.com
 
 ---
