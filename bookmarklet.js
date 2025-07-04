@@ -28,101 +28,109 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.8);
             z-index: 10000;
             display: flex;
             justify-content: center;
             align-items: center;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            backdrop-filter: blur(4px);
         ">
             <div style="
                 background: white;
-                border-radius: 12px;
-                padding: 24px;
-                width: 450px;
+                border-radius: 20px;
+                padding: 32px;
+                width: 500px;
                 max-width: 90vw;
                 max-height: 90vh;
                 overflow-y: auto;
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
             ">
                 <div style="
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 20px;
+                    margin-bottom: 24px;
                 ">
-                    <h2 style="margin: 0; color: #1f2937; font-size: 20px;">Browser Page Impact</h2>
+                    <h2 style="margin: 0; color: #2d3748; font-size: 24px; font-weight: 600;">📝 ImpactDoc</h2>
                     <button id="close-dialog" style="
                         background: none;
                         border: none;
-                        font-size: 24px;
+                        font-size: 28px;
                         cursor: pointer;
-                        color: #6b7280;
+                        color: #a0aec0;
                         padding: 0;
-                        width: 30px;
-                        height: 30px;
+                        width: 32px;
+                        height: 32px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                    ">&times;</button>
+                        border-radius: 50%;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='#f7fafc'" onmouseout="this.style.background='none'">&times;</button>
                 </div>
                 
-                <div id="auth-section" style="display: block;">
-                    <p style="color: #6b7280; margin-bottom: 16px;">
-                        Connect your Google account to write to your monthly tracking document
+                <div id="auth-section" style="display: block; text-align: center;">
+                    <p style="color: #4a5568; margin-bottom: 20px; font-size: 16px;">
+                        Connect your Google account to access your private document
                     </p>
                     <button id="auth-button" style="
                         background: #4285f4;
                         color: white;
                         border: none;
-                        padding: 12px 24px;
-                        border-radius: 6px;
+                        padding: 14px 28px;
+                        border-radius: 12px;
                         cursor: pointer;
-                        font-size: 14px;
+                        font-size: 16px;
                         width: 100%;
-                        margin-bottom: 12px;
-                    ">Sign in with Google</button>
+                        margin-bottom: 16px;
+                        font-weight: 600;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='#3367d6'" onmouseout="this.style.background='#4285f4'">Sign in with Google</button>
                 </div>
 
                 <div id="setup-section" style="display: none;">
-                    <h3 style="margin: 0 0 16px 0; color: #374151; font-size: 18px;">Setup Your Document</h3>
-                    <p style="color: #6b7280; margin-bottom: 16px;">
+                    <h3 style="margin: 0 0 20px 0; color: #2d3748; font-size: 20px; font-weight: 600;">Setup Your Document</h3>
+                    <p style="color: #4a5568; margin-bottom: 20px;">
                         Enter your Google Doc ID to connect to your tracking document:
                     </p>
                     
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: 500;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; color: #2d3748; font-weight: 600;">
                             Google Doc ID:
                         </label>
                         <input type="text" id="doc-id-input" placeholder="Enter your Google Doc ID" style="
                             width: 100%;
-                            padding: 8px 12px;
-                            border: 1px solid #d1d5db;
-                            border-radius: 6px;
-                            font-size: 14px;
+                            padding: 12px 16px;
+                            border: 2px solid #e2e8f0;
+                            border-radius: 8px;
+                            font-size: 16px;
                             box-sizing: border-box;
-                        ">
-                        <small style="color: #6b7280; font-size: 12px; display: block; margin-top: 4px;">
+                            transition: border-color 0.2s;
+                        " onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+                        <small style="color: #718096; font-size: 14px; display: block; margin-top: 8px;">
                             Found in the URL: docs.google.com/document/d/<strong>DOCUMENT_ID</strong>/edit
                         </small>
                     </div>
                     
                     <button id="connect-doc" style="
-                        background: #10b981;
+                        background: #48bb78;
                         color: white;
                         border: none;
                         padding: 12px 24px;
-                        border-radius: 6px;
+                        border-radius: 8px;
                         cursor: pointer;
-                        font-size: 14px;
+                        font-size: 16px;
                         width: 100%;
-                        margin-bottom: 16px;
-                    ">Connect Document</button>
+                        margin-bottom: 20px;
+                        font-weight: 600;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='#38a169'" onmouseout="this.style.background='#48bb78'">Connect Document</button>
                     
-                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
-                        <p style="margin: 0 0 8px 0; font-weight: 500; color: #374151; font-size: 14px;">Don't have a Google Doc yet?</p>
-                        <p style="margin: 0; color: #6b7280; font-size: 12px;">
-                            1. Go to <a href="https://docs.google.com" target="_blank" style="color: #3b82f6;">docs.google.com</a><br>
+                    <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                        <p style="margin: 0 0 12px 0; font-weight: 600; color: #2d3748; font-size: 16px;">Don't have a Google Doc yet?</p>
+                        <p style="margin: 0; color: #4a5568; font-size: 14px;">
+                            1. Go to <a href="https://docs.google.com" target="_blank" style="color: #4285f4;">docs.google.com</a><br>
                             2. Create a new document<br>
                             3. Copy the document ID from the URL<br>
                             4. Paste it above and click "Connect Document"
@@ -131,16 +139,16 @@
                 </div>
 
                 <div id="content-section" style="display: none;">
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: 500;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; color: #2d3748; font-weight: 600;">
                             Select Month:
                         </label>
                         <select id="month-select" style="
                             width: 100%;
-                            padding: 8px 12px;
-                            border: 1px solid #d1d5db;
-                            border-radius: 6px;
-                            font-size: 14px;
+                            padding: 12px 16px;
+                            border: 2px solid #e2e8f0;
+                            border-radius: 8px;
+                            font-size: 16px;
                             box-sizing: border-box;
                         ">
                             ${months.map((month, index) => 
@@ -149,31 +157,31 @@
                         </select>
                     </div>
                     
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: 500;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; color: #2d3748; font-weight: 600;">
                             Entry Title:
                         </label>
                         <input type="text" id="entry-title" placeholder="Brief description of the entry" style="
                             width: 100%;
-                            padding: 8px 12px;
-                            border: 1px solid #d1d5db;
-                            border-radius: 6px;
-                            font-size: 14px;
+                            padding: 12px 16px;
+                            border: 2px solid #e2e8f0;
+                            border-radius: 8px;
+                            font-size: 16px;
                             box-sizing: border-box;
                         ">
                     </div>
                     
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: 500;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; color: #2d3748; font-weight: 600;">
                             Content:
                         </label>
                         <textarea id="content-text" placeholder="Enter your content here..." style="
                             width: 100%;
                             height: 120px;
-                            padding: 8px 12px;
-                            border: 1px solid #d1d5db;
-                            border-radius: 6px;
-                            font-size: 14px;
+                            padding: 12px 16px;
+                            border: 2px solid #e2e8f0;
+                            border-radius: 8px;
+                            font-size: 16px;
                             resize: vertical;
                             box-sizing: border-box;
                             font-family: inherit;
@@ -181,55 +189,60 @@
                     </div>
                     
                     <button id="add-entry" style="
-                        background: #10b981;
+                        background: #48bb78;
                         color: white;
                         border: none;
-                        padding: 12px 24px;
-                        border-radius: 6px;
+                        padding: 14px 28px;
+                        border-radius: 12px;
                         cursor: pointer;
-                        font-size: 14px;
+                        font-size: 16px;
                         width: 100%;
-                        margin-bottom: 12px;
-                    ">Add Entry</button>
+                        margin-bottom: 16px;
+                        font-weight: 600;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='#38a169'" onmouseout="this.style.background='#48bb78'">Add Entry</button>
                     
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 12px;">
                         <button id="view-doc" style="
-                            background: #6b7280;
+                            background: #718096;
                             color: white;
                             border: none;
-                            padding: 8px 16px;
-                            border-radius: 6px;
+                            padding: 10px 16px;
+                            border-radius: 8px;
                             cursor: pointer;
-                            font-size: 12px;
+                            font-size: 14px;
                             flex: 1;
+                            font-weight: 500;
                         ">View Document</button>
                         <button id="change-doc" style="
-                            background: #f59e0b;
+                            background: #ed8936;
                             color: white;
                             border: none;
-                            padding: 8px 16px;
-                            border-radius: 6px;
+                            padding: 10px 16px;
+                            border-radius: 8px;
                             cursor: pointer;
-                            font-size: 12px;
+                            font-size: 14px;
                             flex: 1;
+                            font-weight: 500;
                         ">Change Document</button>
                         <button id="sign-out" style="
-                            background: #ef4444;
+                            background: #e53e3e;
                             color: white;
                             border: none;
-                            padding: 8px 16px;
-                            border-radius: 6px;
+                            padding: 10px 16px;
+                            border-radius: 8px;
                             cursor: pointer;
-                            font-size: 12px;
+                            font-size: 14px;
                             flex: 1;
+                            font-weight: 500;
                         ">Sign Out</button>
                     </div>
                 </div>
 
                 <div id="status" style="
-                    margin-top: 12px;
-                    padding: 8px 12px;
-                    border-radius: 6px;
+                    margin-top: 16px;
+                    padding: 12px 16px;
+                    border-radius: 8px;
                     font-size: 14px;
                     display: none;
                 "></div>
@@ -262,9 +275,9 @@
     function showStatus(message, isError = false) {
         statusDiv.textContent = message;
         statusDiv.style.display = 'block';
-        statusDiv.style.background = isError ? '#fef2f2' : '#f0fdf4';
-        statusDiv.style.color = isError ? '#dc2626' : '#166534';
-        statusDiv.style.border = `1px solid ${isError ? '#fecaca' : '#bbf7d0'}`;
+        statusDiv.style.background = isError ? '#fed7d7' : '#c6f6d5';
+        statusDiv.style.color = isError ? '#c53030' : '#2f855a';
+        statusDiv.style.border = `2px solid ${isError ? '#feb2b2' : '#9ae6b4'}`;
     }
 
     // Load Google APIs
