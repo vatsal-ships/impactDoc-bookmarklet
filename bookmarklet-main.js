@@ -480,11 +480,11 @@ window.initImpactDoc = function() {
     const setupSection = document.getElementById('setup-section');
     const contentSection = document.getElementById('content-section');
     const authButton = document.getElementById('auth-button');
-    const connectDocButton = document.getElementById('connect-doc');
-    const addEntryButton = document.getElementById('add-entry');
-    const viewDocButton = document.getElementById('view-doc');
-    const changeDocButton = document.getElementById('change-doc');
-    const signOutButton = document.getElementById('sign-out');
+    const connectDocButton = document.getElementById('connect-doc-button');
+    const addEntryButton = document.getElementById('add-entry-button');
+    const viewDocButton = document.getElementById('view-doc-button');
+    const changeDocButton = document.getElementById('change-doc-button');
+    const signOutButton = document.getElementById('sign-out-button');
     const closeButton = document.getElementById('close-dialog');
     const statusDiv = document.getElementById('status');
 
@@ -687,9 +687,24 @@ window.initImpactDoc = function() {
                 
                 isAuthenticated = true;
                 
-                // Update UI
+                // Check for existing document ID (both localStorage and bridge storage)
+                let docId = localStorage.getItem('browserPageImpact_docId');
+                if (!docId) {
+                    try {
+                        docId = await getStoredValue('browserPageImpact_docId');
+                        if (docId) {
+                            // Store in localStorage for future speed
+                            localStorage.setItem('browserPageImpact_docId', docId);
+                        }
+                    } catch (e) {
+                        console.warn('Failed to get stored doc ID:', e);
+                    }
+                }
+                
+                // Update UI based on document availability
                 authSection.style.display = 'none';
-                if (masterDocId) {
+                if (docId) {
+                    masterDocId = docId;
                     contentSection.style.display = 'block';
                     showStatus('Successfully authenticated! Ready to add entries.');
                 } else {
