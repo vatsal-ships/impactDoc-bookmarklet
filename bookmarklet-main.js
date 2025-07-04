@@ -31,154 +31,191 @@ window.initImpactDoc = function() {
         }
     }
     
-    // Robust cookie-based storage that works on all domains
-    function setCookie(name, value, days = 365) {
-        const expires = new Date();
-        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    // Universal cross-domain storage using GitHub Pages as bridge
+    const STORAGE_BRIDGE_URL = 'https://vatsal-ships.github.io/impactDoc-bookmarklet/storage-bridge.html';
+    let storageBridge = null;
+    let pendingStorageRequests = new Map();
+    let storageRequestId = 0;
+
+    // Initialize storage bridge (invisible iframe to GitHub Pages)
+    function initStorageBridge() {
+        if (storageBridge) return Promise.resolve();
         
-        // Try multiple cookie formats for maximum compatibility
-        const cookieString = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-        
-        // Set cookie without domain restriction (works on current domain)
-        document.cookie = cookieString;
-        
-        // Also try with explicit domain settings for broader compatibility
-        try {
-            const hostname = window.location.hostname;
-            if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
-                // Try with current domain
-                document.cookie = `${cookieString};domain=${hostname}`;
+        return new Promise((resolve, reject) => {
+            storageBridge = document.createElement('iframe');
+            storageBridge.style.display = 'none';
+            storageBridge.src = STORAGE_BRIDGE_URL;
+            
+            const messageHandler = (event) => {
+                if (event.origin !== 'https://vatsal-ships.github.io') return;
                 
-                // Try with parent domain (for subdomains)
-                const parts = hostname.split('.');
-                if (parts.length > 2) {
-                    const parentDomain = '.' + parts.slice(-2).join('.');
-                    document.cookie = `${cookieString};domain=${parentDomain}`;
-                }
-            }
-        } catch (e) {
-            // Ignore domain-specific cookie errors
-        }
-    }
-    
-    function getCookie(name) {
-        const nameEQ = name + "=";
-        const ca = document.cookie.split(';');
-        for (let i = 0; i < ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-        }
-        return null;
-    }
-    
-    function deleteCookie(name) {
-        // Delete from current path
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
-        
-        // Also try to delete from domain-specific settings
-        try {
-            const hostname = window.location.hostname;
-            if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
-                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=${hostname}`;
-                
-                const parts = hostname.split('.');
-                if (parts.length > 2) {
-                    const parentDomain = '.' + parts.slice(-2).join('.');
-                    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=${parentDomain}`;
-                }
-            }
-        } catch (e) {
-            // Ignore domain-specific cookie errors
-        }
-    }
-    
-    // Check for stored authentication token (cookies + localStorage)
-    function getStoredToken() {
-        // First try encrypted cookie
-        const cookieToken = getCookie('browserPageImpact_token');
-        if (cookieToken) {
-            const decrypted = simpleDecrypt(cookieToken);
-            if (decrypted) {
-                try {
-                    const parsed = JSON.parse(decrypted);
-                    const now = Date.now();
-                    
-                    // Check if token is expired (with 5 minute buffer)
-                    if (parsed.expiresAt && now >= (parsed.expiresAt - 300000)) {
-                        deleteCookie('browserPageImpact_token');
-                        return null;
+                if (event.data.type === 'storage-bridge-ready') {
+                    window.removeEventListener('message', messageHandler);
+                    resolve();
+                } else if (event.data.type === 'storage-response') {
+                    const request = pendingStorageRequests.get(event.data.requestId);
+                    if (request) {
+                        pendingStorageRequests.delete(event.data.requestId);
+                        if (event.data.success) {
+                            request.resolve(event.data.value);
+                        } else {
+                            request.reject(new Error(event.data.error));
+                        }
                     }
-                    
-                    return parsed;
-                } catch (e) {
-                    deleteCookie('browserPageImpact_token');
                 }
-            }
-        }
-        
-        // Fallback to localStorage and migrate to cookie
-        const localToken = localStorage.getItem('browserPageImpact_token');
-        if (localToken) {
-            try {
-                const parsed = JSON.parse(localToken);
-                const now = Date.now();
-                
-                // Check if token is expired (with 5 minute buffer)
-                if (parsed.expiresAt && now >= (parsed.expiresAt - 300000)) {
-                    localStorage.removeItem('browserPageImpact_token');
-                    return null;
+            };
+            
+            window.addEventListener('message', messageHandler);
+            
+            storageBridge.onload = () => {
+                // Bridge will send ready message
+            };
+            
+            storageBridge.onerror = () => {
+                window.removeEventListener('message', messageHandler);
+                reject(new Error('Failed to load storage bridge'));
+            };
+            
+            document.body.appendChild(storageBridge);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                if (pendingStorageRequests.size === 0) return; // Already resolved
+                window.removeEventListener('message, messageHandler');
+                reject(new Error('Storage bridge timeout'));
+            }, 10000);
+        });
+    }
+
+    // Send message to storage bridge
+    function sendStorageMessage(action, key, value = null) {
+        return new Promise((resolve, reject) => {
+            const requestId = ++storageRequestId;
+            pendingStorageRequests.set(requestId, { resolve, reject });
+            
+            storageBridge.contentWindow.postMessage({
+                type: 'storage-request',
+                requestId,
+                action,
+                key,
+                value
+            }, 'https://vatsal-ships.github.io');
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                if (pendingStorageRequests.has(requestId)) {
+                    pendingStorageRequests.delete(requestId);
+                    reject(new Error('Storage request timeout'));
                 }
-                
-                // Migrate to cookie for cross-domain access
-                const encrypted = simpleEncrypt(JSON.stringify(parsed));
-                setCookie('browserPageImpact_token', encrypted, 365);
-                
-                return parsed;
-            } catch (e) {
-                localStorage.removeItem('browserPageImpact_token');
+            }, 5000);
+        });
+    }
+
+    // Robust cross-domain storage functions
+    async function getStoredValue(key) {
+        try {
+            // First try localStorage (fast for same domain)
+            const localValue = localStorage.getItem(key);
+            if (localValue) {
+                return localValue;
             }
+            
+            // Then try universal bridge storage
+            await initStorageBridge();
+            return await sendStorageMessage('get', key);
+        } catch (e) {
+            console.warn('Storage get failed:', e);
+            return null;
         }
-        
-        return null;
+    }
+
+    async function setStoredValue(key, value) {
+        try {
+            // Store in localStorage (fast for same domain)
+            localStorage.setItem(key, value);
+            
+            // Also store in universal bridge storage
+            await initStorageBridge();
+            await sendStorageMessage('set', key, value);
+            return true;
+        } catch (e) {
+            console.warn('Storage set failed:', e);
+            return false;
+        }
+    }
+
+    async function removeStoredValue(key) {
+        try {
+            // Remove from localStorage
+            localStorage.removeItem(key);
+            
+            // Remove from universal bridge storage
+            await initStorageBridge();
+            await sendStorageMessage('remove', key);
+            return true;
+        } catch (e) {
+            console.warn('Storage remove failed:', e);
+            return false;
+        }
+    }
+
+    // Check for stored authentication token
+    async function getStoredToken() {
+        try {
+            const tokenString = await getStoredValue('browserPageImpact_token');
+            if (!tokenString) return null;
+            
+            const decrypted = simpleDecrypt(tokenString);
+            if (!decrypted) return null;
+            
+            const parsed = JSON.parse(decrypted);
+            const now = Date.now();
+            
+            // Check if token is expired (with 5 minute buffer)
+            if (parsed.expiresAt && now >= (parsed.expiresAt - 300000)) {
+                await removeStoredValue('browserPageImpact_token');
+                return null;
+            }
+            
+            return parsed;
+        } catch (e) {
+            console.warn('Get stored token failed:', e);
+            return null;
+        }
     }
     
-    // Store authentication token (encrypted cookie + localStorage)
-    function storeToken(token, expiresIn) {
-        const tokenData = {
-            access_token: token,
-            expiresAt: Date.now() + (expiresIn * 1000) // Convert seconds to milliseconds
-        };
-        
-        // Store in encrypted cookie (365 days = 1 year)
-        const encrypted = simpleEncrypt(JSON.stringify(tokenData));
-        setCookie('browserPageImpact_token', encrypted, 365);
-        
-        // Also store in localStorage (fallback)
-        localStorage.setItem('browserPageImpact_token', JSON.stringify(tokenData));
+    // Store authentication token
+    async function storeToken(token, expiresIn) {
+        try {
+            const tokenData = {
+                access_token: token,
+                expiresAt: Date.now() + (expiresIn * 1000) // Convert seconds to milliseconds
+            };
+            
+            const encrypted = simpleEncrypt(JSON.stringify(tokenData));
+            await setStoredValue('browserPageImpact_token', encrypted);
+            return true;
+        } catch (e) {
+            console.warn('Store token failed:', e);
+            return false;
+        }
     }
     
-    // Initialize masterDocId from cookie or localStorage
-    function initializeMasterDocId() {
-        // Try cookie first
-        const cookieDocId = getCookie('browserPageImpact_docId');
-        if (cookieDocId) {
-            masterDocId = cookieDocId;
-            return;
-        }
-        
-        // Fallback to localStorage and migrate to cookie
-        const localDocId = localStorage.getItem('browserPageImpact_docId');
-        if (localDocId) {
-            masterDocId = localDocId;
-            setCookie('browserPageImpact_docId', localDocId, 365);
+    // Initialize masterDocId from storage
+    async function initializeMasterDocId() {
+        try {
+            const docId = await getStoredValue('browserPageImpact_docId');
+            if (docId) {
+                masterDocId = docId;
+            }
+        } catch (e) {
+            console.warn('Initialize master doc ID failed:', e);
         }
     }
     
     // Handle token expiration
-    function handleTokenExpiration() {
-        localStorage.removeItem('browserPageImpact_token');
-        deleteCookie('browserPageImpact_token');
+    async function handleTokenExpiration() {
+        await removeStoredValue('browserPageImpact_token');
         gapi.client.setToken('');
         isAuthenticated = false;
         
@@ -467,22 +504,22 @@ window.initImpactDoc = function() {
         gapi.client.init({
             apiKey: API_KEY,
             discoveryDocs: [DISCOVERY_DOC],
-        }).then(() => {
+        }).then(async () => {
             gapiInited = true;
-            maybeEnableButtons();
+            await maybeEnableButtons();
         }).catch((error) => {
             console.error('Error initializing GAPI client:', error);
             showStatus('Failed to initialize Google APIs: ' + error.message, true);
         });
     }
 
-    function maybeEnableButtons() {
+    async function maybeEnableButtons() {
         if (gapiInited) {
             // Initialize masterDocId first
-            initializeMasterDocId();
+            await initializeMasterDocId();
             
             // Check if we have a valid stored token
-            const storedToken = getStoredToken();
+            const storedToken = await getStoredToken();
             if (storedToken) {
                 // Set the token in gapi client
                 gapi.client.setToken({
@@ -514,7 +551,7 @@ window.initImpactDoc = function() {
         const popup = window.open(authUrl, 'auth-popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
         
         // Listen for authentication result
-        const messageHandler = (event) => {
+        const messageHandler = async (event) => {
             // Verify origin for security
             if (event.origin !== 'https://vatsal-ships.github.io') {
                 return;
@@ -522,7 +559,7 @@ window.initImpactDoc = function() {
             
             if (event.data.type === 'auth-success') {
                 // Store the token persistently
-                storeToken(event.data.token, event.data.expiresIn);
+                await storeToken(event.data.token, event.data.expiresIn);
                 
                 // Set the token in gapi client
                 gapi.client.setToken({
@@ -579,8 +616,7 @@ window.initImpactDoc = function() {
             });
 
             masterDocId = docId;
-            localStorage.setItem('browserPageImpact_docId', docId);
-            setCookie('browserPageImpact_docId', docId, 365);
+            await setStoredValue('browserPageImpact_docId', docId);
             setupSection.style.display = 'none';
             contentSection.style.display = 'block';
             showStatus('Document connected successfully!');
@@ -798,17 +834,16 @@ window.initImpactDoc = function() {
         }
     }
 
-    function changeDocument() {
+    async function changeDocument() {
         masterDocId = null;
-        localStorage.removeItem('browserPageImpact_docId');
-        deleteCookie('browserPageImpact_docId');
+        await removeStoredValue('browserPageImpact_docId');
         contentSection.style.display = 'none';
         setupSection.style.display = 'block';
         document.getElementById('doc-id-input').value = '';
         showStatus('Ready to connect to a different document');
     }
 
-    function signOut() {
+    async function signOut() {
         const token = gapi.client.getToken();
         if (token !== null) {
             google.accounts.oauth2.revoke(token.access_token);
@@ -816,8 +851,7 @@ window.initImpactDoc = function() {
         }
         
         // Clear stored token
-        localStorage.removeItem('browserPageImpact_token');
-        deleteCookie('browserPageImpact_token');
+        await removeStoredValue('browserPageImpact_token');
         isAuthenticated = false;
         
         authSection.style.display = 'block';

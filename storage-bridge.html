@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImpactDoc Storage Bridge</title>
+</head>
+<body>
+    <script>
+        // This page acts as a storage bridge for cross-domain bookmarklet storage
+        // It runs on GitHub Pages and communicates via postMessage
+        
+        const ALLOWED_ORIGINS = ['*']; // Allow all origins for bookmarklet usage
+        
+        // Initialize storage bridge
+        function initStorageBridge() {
+            // Send ready message to parent
+            if (window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'storage-bridge-ready'
+                }, '*');
+            }
+            
+            // Listen for storage requests
+            window.addEventListener('message', handleStorageRequest);
+        }
+        
+        function handleStorageRequest(event) {
+            // Basic security check - only respond to storage requests
+            if (!event.data || event.data.type !== 'storage-request') {
+                return;
+            }
+            
+            const { requestId, action, key, value } = event.data;
+            
+            try {
+                let result = null;
+                let success = true;
+                
+                switch (action) {
+                    case 'get':
+                        result = localStorage.getItem(key);
+                        break;
+                        
+                    case 'set':
+                        localStorage.setItem(key, value);
+                        result = true;
+                        break;
+                        
+                    case 'remove':
+                        localStorage.removeItem(key);
+                        result = true;
+                        break;
+                        
+                    default:
+                        success = false;
+                        result = 'Unknown action: ' + action;
+                }
+                
+                // Send response back
+                event.source.postMessage({
+                    type: 'storage-response',
+                    requestId: requestId,
+                    success: success,
+                    value: result,
+                    error: success ? null : result
+                }, event.origin);
+                
+            } catch (error) {
+                // Send error response
+                event.source.postMessage({
+                    type: 'storage-response',
+                    requestId: requestId,
+                    success: false,
+                    value: null,
+                    error: error.message
+                }, event.origin);
+            }
+        }
+        
+        // Initialize when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initStorageBridge);
+        } else {
+            initStorageBridge();
+        }
+    </script>
+</body>
+</html> 
