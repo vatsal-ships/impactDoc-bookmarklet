@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loader Bookmarklet Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .bookmarklet {
+            display: inline-block;
+            background: #4285f4;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 10px;
+            transition: background 0.2s;
+        }
+        .bookmarklet:hover {
+            background: #3367d6;
+        }
+        .size-comparison {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .size-comparison h4 {
+            margin-top: 0;
+            color: #2d3748;
+        }
+        .size-bar {
+            background: #e2e8f0;
+            border-radius: 4px;
+            height: 20px;
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .size-fill {
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .size-small { background: #48bb78; }
+        .size-large { background: #e53e3e; }
+        .instructions {
+            text-align: left;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        .instructions ol {
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>🚀 Loader Bookmarklet Test</h1>
+        
+        <div class="info">
+            <h4>🔧 New Approach: Dynamic Loading</h4>
+            <p>This bookmarklet is much smaller and loads the main code dynamically from GitHub Pages.</p>
+        </div>
+        
+        <div class="size-comparison">
+            <h4>📊 Size Comparison</h4>
+            <div>
+                <strong>Old Bookmarklet:</strong>
+                <div class="size-bar">
+                    <div class="size-fill size-large" style="width: 100%;">~14KB (Too Large!)</div>
+                </div>
+            </div>
+            <div>
+                <strong>New Loader:</strong>
+                <div class="size-bar">
+                    <div class="size-fill size-small" style="width: 15%;">~200 bytes ✅</div>
+                </div>
+            </div>
+        </div>
+        
+        <h3>🧪 Test the New Loader</h3>
+        
+        <div style="margin: 20px 0;">
+            <h4>1. Basic Test (should show alert):</h4>
+            <a href="javascript:alert('✅ Basic test works!');" class="bookmarklet">
+                🔍 Test Basic
+            </a>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <h4>2. Small Loader (should show ImpactDoc dialog):</h4>
+            <a href="#" id="loader-bookmarklet" class="bookmarklet">
+                📝 Test Loader
+            </a>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <h4>3. Manual Test (click to simulate the loader):</h4>
+            <button onclick="testLoader()" style="background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                🚀 Test Loader Manually
+            </button>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li><strong>Test Basic:</strong> Drag the "Test Basic" button to your bookmarks bar and click it</li>
+                <li><strong>Test Loader:</strong> If basic works, drag the "Test Loader" button and click it</li>
+                <li><strong>Manual Test:</strong> Click the manual test button to simulate the loader</li>
+            </ol>
+        </div>
+        
+        <div class="success">
+            <h4>✅ Advantages of the Loader Approach:</h4>
+            <ul style="text-align: left; margin: 10px 0;">
+                <li><strong>Small Size:</strong> Only ~200 bytes vs 14KB</li>
+                <li><strong>Browser Compatible:</strong> Works with bookmarklet size limits</li>
+                <li><strong>Always Updated:</strong> Loads latest code from GitHub Pages</li>
+                <li><strong>Better Performance:</strong> Faster to drag and bookmark</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Load the loader bookmarklet
+        fetch('./bookmarklet-loader.js')
+            .then(response => response.text())
+            .then(code => {
+                document.getElementById('loader-bookmarklet').href = code.trim();
+                console.log('✅ Loader bookmarklet loaded:', code.length, 'bytes');
+            })
+            .catch(error => {
+                console.error('❌ Failed to load loader bookmarklet:', error);
+            });
+
+        function testLoader() {
+            console.log('🧪 Testing loader manually...');
+            
+            // Simulate what the loader does
+            if (document.getElementById('browser-page-impact-dialog')) {
+                alert('Dialog already exists!');
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = './bookmarklet-main.js'; // Use local version for testing
+            script.onload = function() {
+                console.log('✅ Main script loaded');
+                if (window.initImpactDoc) {
+                    window.initImpactDoc();
+                    console.log('✅ ImpactDoc initialized');
+                } else {
+                    console.error('❌ initImpactDoc function not found');
+                }
+            };
+            script.onerror = function() {
+                console.error('❌ Failed to load main script');
+                alert('Failed to load ImpactDoc. Please check your internet connection.');
+            };
+            
+            document.head.appendChild(script);
+        }
+    </script>
+</body>
+</html> 

@@ -76,6 +76,9 @@
                 <p>Drag this button to your bookmarks bar:</p>
                 <a href="#" id="bookmarklet" class="bookmarklet-btn">📝 ImpactDoc Bookmarklet</a>
                 <p><small>💡 Drag, don't click!</small></p>
+                <p style="margin-top: 10px; font-size: 0.9rem; opacity: 0.9;">
+                    ⚡ New: Compact loader (~200 bytes) that works with all browsers!
+                </p>
             </div>
 
             <div style="background: #e6fffa; border: 1px solid #81e6d9; border-radius: 12px; padding: 20px; text-align: center; margin: 30px 0;">
@@ -151,8 +154,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const bookmarklet = document.getElementById('bookmarklet');
             
-            // Load bookmarklet code from the minified file
-            fetch('./bookmarklet-minified.js')
+            // Load bookmarklet code from the loader file
+            fetch('./bookmarklet-loader.js')
                 .then(response => response.text())
                 .then(code => {
                     bookmarklet.href = code.trim();
