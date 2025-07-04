@@ -166,8 +166,10 @@ redirect_uri=storagerelay://https/vatsal-ships.github.io?id=auth558915
             <h3>Add Redirect URIs</h3>
             <p>In the <strong>Authorized redirect URIs</strong> section, click <strong>ADD URI</strong> and add these URIs:</p>
             <div class="code">https://vatsal-ships.github.io</div>
-            <div class="code">storagerelay://https/vatsal-ships.github.io</div>
             <div class="code">https://vatsal-ships.github.io/</div>
+            <div class="warning">
+                <strong>Note:</strong> Do NOT add the <code>storagerelay://</code> URI - Google Cloud Console won't accept it and it's not required. The OAuth library handles this automatically.
+            </div>
         </div>
 
         <div class="step">
@@ -184,7 +186,7 @@ redirect_uri=storagerelay://https/vatsal-ships.github.io?id=auth558915
             <label><input type="checkbox"> OAuth client found and opened for editing</label>
             <label><input type="checkbox"> JavaScript origin <code>https://vatsal-ships.github.io</code> added</label>
             <label><input type="checkbox"> Redirect URI <code>https://vatsal-ships.github.io</code> added</label>
-            <label><input type="checkbox"> Redirect URI <code>storagerelay://https/vatsal-ships.github.io</code> added</label>
+            <label><input type="checkbox"> Redirect URI <code>https://vatsal-ships.github.io/</code> added</label>
             <label><input type="checkbox"> Configuration saved</label>
             <label><input type="checkbox"> Waited 5-10 minutes for propagation</label>
             <label><input type="checkbox"> Tested bookmarklet on GitHub Pages</label>
@@ -247,7 +249,8 @@ Authorized JavaScript origins:
 Authorized redirect URIs:
   - https://vatsal-ships.github.io
   - https://vatsal-ships.github.io/
-  - storagerelay://https/vatsal-ships.github.io
+
+Note: storagerelay:// URIs are handled automatically by Google's OAuth library
         </div>
 
         <h3>Browser Console Debugging</h3>
