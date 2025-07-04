@@ -503,6 +503,7 @@ window.initImpactDoc = function() {
             const timestamp = new Date().toLocaleString();
             const entry = `\n${timestamp}\n${entryTitle}\n${content}\n\n`;
 
+            // Insert text first
             await gapi.client.docs.documents.batchUpdate({
                 documentId: masterDocId,
                 resource: {
@@ -511,6 +512,37 @@ window.initImpactDoc = function() {
                             insertText: {
                                 location: { index: insertIndex },
                                 text: entry
+                            }
+                        }
+                    ]
+                }
+            });
+
+            // Then format it to ensure normal text style (not bold)
+            await gapi.client.docs.documents.batchUpdate({
+                documentId: masterDocId,
+                resource: {
+                    requests: [
+                        {
+                            updateTextStyle: {
+                                range: {
+                                    startIndex: insertIndex,
+                                    endIndex: insertIndex + entry.length
+                                },
+                                textStyle: {
+                                    bold: false,
+                                    fontSize: { magnitude: 11, unit: 'PT' },
+                                    foregroundColor: {
+                                        color: {
+                                            rgbColor: {
+                                                red: 0.0,
+                                                green: 0.0,
+                                                blue: 0.0
+                                            }
+                                        }
+                                    }
+                                },
+                                fields: 'bold,fontSize,foregroundColor'
                             }
                         }
                     ]
