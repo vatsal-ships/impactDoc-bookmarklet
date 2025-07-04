@@ -3,335 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browser Page Impact - Bookmarklet</title>
-    <meta name="description" content="A powerful bookmarklet to quickly add entries to your Google Docs tracking document from any webpage.">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <title>ImpactDoc Bookmarklet</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            color: #2d3748;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            padding: 40px 0;
-        }
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 16px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .main-content {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 3rem; margin-bottom: 16px; }
+        .card { 
+            background: white; 
+            border-radius: 20px; 
+            padding: 40px; 
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .install-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 40px;
+            border-radius: 16px;
             margin-bottom: 40px;
         }
-        .bookmarklet-section {
-            text-align: center;
-            margin: 40px 0;
-            padding: 30px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 15px;
-            color: white;
-        }
-        .bookmarklet-button {
+        .bookmarklet-btn {
             display: inline-block;
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            color: white;
-            padding: 20px 40px;
+            background: white;
+            color: #667eea;
+            padding: 16px 32px;
             border-radius: 12px;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 18px;
-            margin: 20px 0;
-            transition: all 0.3s ease;
-            cursor: grab;
-            user-select: none;
-            border: 2px solid rgba(255,255,255,0.3);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        }
-        .bookmarklet-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            background: rgba(255,255,255,0.3);
-        }
-        .bookmarklet-button:active {
-            cursor: grabbing;
-            transform: translateY(-1px);
-        }
-        .drag-instruction {
-            font-size: 16px;
-            margin-top: 16px;
-            opacity: 0.9;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            margin: 40px 0;
-        }
-        .feature {
-            background: #f8f9fa;
-            padding: 24px;
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-        }
-        .feature h3 {
-            color: #333;
-            margin-bottom: 12px;
+            font-weight: 700;
             font-size: 1.1rem;
-        }
-        .feature p {
-            color: #666;
-            font-size: 0.95rem;
-        }
-        .steps {
-            margin: 40px 0;
-        }
-        .step {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            padding: 24px;
             margin: 20px 0;
-            position: relative;
+            cursor: grab;
+            transition: all 0.3s ease;
         }
-        .step-number {
-            position: absolute;
-            top: -12px;
-            left: 24px;
-            background: #667eea;
-            color: white;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .bookmarklet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }
+        .feature { background: #f8fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #667eea; }
+        .steps { margin: 30px 0; }
+        .step { background: #f8fafc; padding: 20px; margin: 15px 0; border-radius: 12px; position: relative; }
+        .step-number { 
+            position: absolute; top: -10px; left: 20px; 
+            background: #667eea; color: white; 
+            width: 30px; height: 30px; 
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
             font-weight: bold;
-            font-size: 14px;
         }
-        .step h3 {
-            margin-bottom: 12px;
-            padding-left: 20px;
-            color: #333;
-        }
-        .step p, .step ol, .step ul {
-            color: #666;
-            padding-left: 20px;
-        }
-        .warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 16px;
-            margin: 20px 0;
-        }
-        .warning h4 {
-            color: #856404;
-            margin-bottom: 8px;
-        }
-        .warning p {
-            color: #856404;
-            margin: 0;
-        }
-        .code {
-            background: #f1f3f4;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.9em;
-        }
-        .github-link {
-            text-align: center;
-            margin: 40px 0;
-        }
-        .github-button {
-            display: inline-block;
-            background: #24292e;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: background 0.3s ease;
-        }
-        .github-button:hover {
-            background: #1b1f23;
-        }
-        .footer {
-            text-align: center;
-            color: white;
-            opacity: 0.8;
-            margin-top: 40px;
-        }
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-            .header p {
-                font-size: 1rem;
-            }
-            .main-content {
-                padding: 24px;
-            }
-            .bookmarklet-button {
-                font-size: 16px;
-                padding: 16px 32px;
-            }
-        }
+        .step h3 { margin-bottom: 10px; padding-left: 15px; }
+        .step p, .step ul { padding-left: 15px; color: #4a5568; }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1>📝 Browser Page Impact</h1>
-            <p>A powerful bookmarklet to quickly add entries to your own private Google Docs tracking document from any webpage. No hosting required!</p>
+            <h1>📝 ImpactDoc</h1>
+            <p>Add entries to your private Google Docs from any webpage</p>
         </header>
 
-        <main class="main-content">
-            <div class="bookmarklet-section">
-                <h2 style="margin-bottom: 16px;">🚀 Install the Bookmarklet</h2>
-                <p style="margin-bottom: 20px; opacity: 0.9;">Drag this button to your bookmarks bar:</p>
-                
-                <a href="javascript:(function(){if(document.getElementById('browser-page-impact-dialog'))return;const CLIENT_ID='267135613225-0q6672a1dl8f3bd1dg123ea2lf1b2er9.apps.googleusercontent.com';const API_KEY='AIzaSyAWg7PkUqRiBoQOOYlVwQJG6PKuxQqN5cA';const DISCOVERY_DOC='https://docs.googleapis.com/$discovery/rest?version=v1';const SCOPES='https://www.googleapis.com/auth/documents';let tokenClient;let gapiInited=false;let gisInited=false;let masterDocId=localStorage.getItem('browserPageImpact_docId');const months=['January','February','March','April','May','June','July','August','September','October','November','December'];const dialogHTML=`<div id=\"browser-page-impact-dialog\" style=\"position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;justify-content:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif\"><div style=\"background:white;border-radius:12px;padding:24px;width:450px;max-width:90vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1)\"><div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:20px\"><h2 style=\"margin:0;color:#1f2937;font-size:20px\">Browser Page Impact</h2><button id=\"close-dialog\" style=\"background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;padding:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center\">&times;</button></div><div id=\"auth-section\" style=\"display:block\"><p style=\"color:#6b7280;margin-bottom:16px\">Connect your Google account to write to your monthly tracking document</p><button id=\"auth-button\" style=\"background:#4285f4;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;width:100%;margin-bottom:12px\">Sign in with Google</button></div><div id=\"setup-section\" style=\"display:none\"><h3 style=\"margin:0 0 16px 0;color:#374151;font-size:18px\">Setup Your Document</h3><p style=\"color:#6b7280;margin-bottom:16px\">Enter your Google Doc ID to connect to your tracking document:</p><div style=\"margin-bottom:16px\"><label style=\"display:block;margin-bottom:8px;color:#374151;font-weight:500\">Google Doc ID:</label><input type=\"text\" id=\"doc-id-input\" placeholder=\"Enter your Google Doc ID\" style=\"width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box\"><small style=\"color:#6b7280;font-size:12px;display:block;margin-top:4px\">Found in the URL: docs.google.com/document/d/<strong>DOCUMENT_ID</strong>/edit</small></div><button id=\"connect-doc\" style=\"background:#10b981;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;width:100%;margin-bottom:16px\">Connect Document</button><div style=\"background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:16px\"><p style=\"margin:0 0 8px 0;font-weight:500;color:#374151;font-size:14px\">Don't have a Google Doc yet?</p><p style=\"margin:0;color:#6b7280;font-size:12px\">1. Go to <a href=\"https://docs.google.com\" target=\"_blank\" style=\"color:#3b82f6\">docs.google.com</a><br>2. Create a new document<br>3. Copy the document ID from the URL<br>4. Paste it above and click \"Connect Document\"</p></div></div><div id=\"content-section\" style=\"display:none\"><div style=\"margin-bottom:16px\"><label style=\"display:block;margin-bottom:8px;color:#374151;font-weight:500\">Select Month:</label><select id=\"month-select\" style=\"width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box\">${months.map((month,index)=>`<option value=\"${index}\" ${index===new Date().getMonth()?'selected':''}>${month}</option>`).join('')}</select></div><div style=\"margin-bottom:16px\"><label style=\"display:block;margin-bottom:8px;color:#374151;font-weight:500\">Entry Title:</label><input type=\"text\" id=\"entry-title\" placeholder=\"Brief description of the entry\" style=\"width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box\"></div><div style=\"margin-bottom:16px\"><label style=\"display:block;margin-bottom:8px;color:#374151;font-weight:500\">Content:</label><textarea id=\"content-text\" placeholder=\"Enter your content here...\" style=\"width:100%;height:120px;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;font-family:inherit\"></textarea></div><button id=\"add-entry\" style=\"background:#10b981;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;width:100%;margin-bottom:12px\">Add Entry</button><div style=\"display:flex;gap:8px\"><button id=\"view-doc\" style=\"background:#6b7280;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;flex:1\">View Document</button><button id=\"change-doc\" style=\"background:#f59e0b;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;flex:1\">Change Document</button><button id=\"sign-out\" style=\"background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;flex:1\">Sign Out</button></div></div><div id=\"status\" style=\"margin-top:12px;padding:8px 12px;border-radius:6px;font-size:14px;display:none\"></div></div></div>`;document.body.insertAdjacentHTML('beforeend',dialogHTML);const dialog=document.getElementById('browser-page-impact-dialog');const authSection=document.getElementById('auth-section');const setupSection=document.getElementById('setup-section');const contentSection=document.getElementById('content-section');const authButton=document.getElementById('auth-button');const connectDocButton=document.getElementById('connect-doc');const addEntryButton=document.getElementById('add-entry');const viewDocButton=document.getElementById('view-doc');const changeDocButton=document.getElementById('change-doc');const signOutButton=document.getElementById('sign-out');const closeButton=document.getElementById('close-dialog');const statusDiv=document.getElementById('status');function closeDialog(){dialog.remove()}function showStatus(message,isError=false){statusDiv.textContent=message;statusDiv.style.display='block';statusDiv.style.background=isError?'#fef2f2':'#f0fdf4';statusDiv.style.color=isError?'#dc2626':'#166534';statusDiv.style.border=`1px solid ${isError?'#fecaca':'#bbf7d0'}`}function loadGoogleAPIs(){const gapiScript=document.createElement('script');gapiScript.src='https://apis.google.com/js/api.js';gapiScript.onload=()=>{gapi.load('client',initializeGapiClient)};document.head.appendChild(gapiScript);const gisScript=document.createElement('script');gisScript.src='https://accounts.google.com/gsi/client';gisScript.onload=()=>{tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPES,callback:''});gisInited=true;maybeEnableButtons()};document.head.appendChild(gisScript)}function initializeGapiClient(){gapi.client.init({apiKey:API_KEY,discoveryDocs:[DISCOVERY_DOC]}).then(()=>{gapiInited=true;maybeEnableButtons()}).catch((error)=>{console.error('Error initializing GAPI client:',error);showStatus('Failed to initialize Google APIs',true)})}function maybeEnableButtons(){if(gapiInited&&gisInited){authButton.disabled=false}}function handleAuthClick(){tokenClient.callback=async(resp)=>{if(resp.error!==undefined){showStatus('Authentication failed: '+resp.error,true);return}authSection.style.display='none';if(masterDocId){contentSection.style.display='block';showStatus('Successfully authenticated! Ready to add entries.')}else{setupSection.style.display='block';showStatus('Successfully authenticated! Please enter your Google Doc ID.')}};if(gapi.client.getToken()===null){tokenClient.requestAccessToken({prompt:'consent'})}else{tokenClient.requestAccessToken({prompt:''})}}async function connectDocument(){const docId=document.getElementById('doc-id-input').value.trim();if(!docId){showStatus('Please enter a Google Doc ID',true);return}connectDocButton.disabled=true;connectDocButton.textContent='Connecting...';showStatus('Verifying document access...');try{await gapi.client.docs.documents.get({documentId:docId});masterDocId=docId;localStorage.setItem('browserPageImpact_docId',docId);setupSection.style.display='none';contentSection.style.display='block';showStatus('Document connected successfully!')}catch(error){console.error('Error accessing document:',error);showStatus('Cannot access document. Please check the ID and make sure you have edit access.',true)}finally{connectDocButton.disabled=false;connectDocButton.textContent='Connect Document'}}async function findOrCreateMonthSection(monthIndex){const currentYear=new Date().getFullYear();const selectedMonth=months[monthIndex];const monthHeader=`${selectedMonth} ${currentYear}`;try{const doc=await gapi.client.docs.documents.get({documentId:masterDocId});const content=doc.result.body.content;let insertIndex=-1;let monthExists=false;for(let i=0;i<content.length;i++){if(content[i].paragraph&&content[i].paragraph.elements){const text=content[i].paragraph.elements[0].textRun?.content||'';if(text.includes(monthHeader)){monthExists=true;for(let j=i+1;j<content.length;j++){if(content[j].paragraph&&content[j].paragraph.elements){const nextText=content[j].paragraph.elements[0].textRun?.content||'';if(months.some(month=>nextText.includes(`${month} ${currentYear}`)&&!nextText.includes(monthHeader))){insertIndex=content[j].startIndex;break}}}if(insertIndex===-1){insertIndex=content[content.length-1].endIndex-1}break}}}if(!monthExists){showStatus(`Creating ${selectedMonth} section...`);insertIndex=content[content.length-1].endIndex-1;const monthSection=`\n${monthHeader}\n${'─'.repeat(50)}\n\n`;await gapi.client.docs.documents.batchUpdate({documentId:masterDocId,resource:{requests:[{insertText:{location:{index:insertIndex},text:monthSection}}]}});await gapi.client.docs.documents.batchUpdate({documentId:masterDocId,resource:{requests:[{updateTextStyle:{range:{startIndex:insertIndex+1,endIndex:insertIndex+1+monthHeader.length},textStyle:{bold:true,fontSize:{magnitude:14,unit:'PT'}},fields:'bold,fontSize'}}]}});insertIndex=insertIndex+monthSection.length}return insertIndex}catch(error){console.error('Error finding/creating month section:',error);throw error}}async function addEntry(){const monthIndex=parseInt(document.getElementById('month-select').value);const entryTitle=document.getElementById('entry-title').value.trim();const content=document.getElementById('content-text').value.trim();if(!entryTitle){showStatus('Please enter an entry title',true);return}if(!content){showStatus('Please enter some content',true);return}addEntryButton.disabled=true;addEntryButton.textContent='Adding...';showStatus('Adding entry to document...');try{const insertIndex=await findOrCreateMonthSection(monthIndex);const timestamp=new Date().toLocaleString();const entry=`\n${entryTitle}\n${timestamp}\n${content}\n\n`;await gapi.client.docs.documents.batchUpdate({documentId:masterDocId,resource:{requests:[{insertText:{location:{index:insertIndex},text:entry}}]}});showStatus('Entry added successfully!');document.getElementById('entry-title').value='';document.getElementById('content-text').value=''}catch(error){console.error('Error adding entry:',error);showStatus('Failed to add entry: '+error.message,true)}finally{addEntryButton.disabled=false;addEntryButton.textContent='Add Entry'}}function viewDocument(){if(masterDocId){window.open(`https://docs.google.com/document/d/${masterDocId}/edit`,'_blank')}}function changeDocument(){masterDocId=null;localStorage.removeItem('browserPageImpact_docId');contentSection.style.display='none';setupSection.style.display='block';document.getElementById('doc-id-input').value='';showStatus('Ready to connect to a different document')}function signOut(){const token=gapi.client.getToken();if(token!==null){google.accounts.oauth2.revoke(token.access_token);gapi.client.setToken('')}authSection.style.display='block';setupSection.style.display='none';contentSection.style.display='none';showStatus('Signed out successfully')}closeButton.addEventListener('click',closeDialog);authButton.addEventListener('click',handleAuthClick);connectDocButton.addEventListener('click',connectDocument);addEntryButton.addEventListener('click',addEntry);viewDocButton.addEventListener('click',viewDocument);changeDocButton.addEventListener('click',changeDocument);signOutButton.addEventListener('click',signOut);dialog.addEventListener('click',(e)=>{if(e.target===dialog){closeDialog()}});loadGoogleAPIs()})();" class="bookmarklet-button">
-                    📝 Browser Page Impact
-                </a>
-                
-                <div class="drag-instruction">
-                    💡 <strong>Don't click here!</strong> Drag the button above to your bookmarks bar.
-                </div>
+        <div class="card">
+            <div class="install-section">
+                <h2>🚀 Install the Bookmarklet</h2>
+                <p>Drag this button to your bookmarks bar:</p>
+                <a href="#" id="bookmarklet" class="bookmarklet-btn">📝 ImpactDoc Bookmarklet</a>
+                <p><small>💡 Drag, don't click!</small></p>
+            </div>
+
+            <div style="background: #e6fffa; border: 1px solid #81e6d9; border-radius: 12px; padding: 20px; text-align: center; margin: 30px 0;">
+                <h4 style="color: #234e52;">🔒 Your Privacy is Protected</h4>
+                <p style="color: #234e52;">Each user connects to their own private Google Doc. Your data stays private!</p>
             </div>
 
             <div class="features">
                 <div class="feature">
-                    <h3>🔐 Secure Authentication</h3>
-                    <p>Uses Google OAuth for secure access to YOUR private documents. Your credentials are never stored.</p>
+                    <h3>🔐 Secure</h3>
+                    <p>Uses Google OAuth for secure access to your documents.</p>
                 </div>
                 <div class="feature">
-                    <h3>📅 Monthly Organization</h3>
-                    <p>Automatically organizes entries by month with proper formatting and timestamps.</p>
+                    <h3>📅 Organized</h3>
+                    <p>Automatically organizes entries by month with timestamps.</p>
                 </div>
                 <div class="feature">
-                    <h3>🚀 One-Click Access</h3>
-                    <p>Works on any website - just click the bookmark! No hosting or installation required.</p>
+                    <h3>🚀 Fast</h3>
+                    <p>Works on any website with one click!</p>
                 </div>
                 <div class="feature">
-                    <h3>💾 Remembers Settings</h3>
-                    <p>Saves YOUR document ID and preferences locally for seamless future use.</p>
+                    <h3>💾 Smart</h3>
+                    <p>Remembers your settings for seamless use.</p>
                 </div>
             </div>
 
             <div class="steps">
-                <h2>📋 How to Install & Use</h2>
+                <h2>📋 How to Get Started</h2>
                 
                 <div class="step">
                     <div class="step-number">1</div>
-                    <h3>Show Your Bookmarks Bar</h3>
-                    <p>Make sure your browser's bookmarks bar is visible:</p>
-                    <ul>
-                        <li><strong>Chrome/Edge:</strong> Press <span class="code">Ctrl+Shift+B</span> (or <span class="code">Cmd+Shift+B</span> on Mac)</li>
-                        <li><strong>Firefox:</strong> Press <span class="code">Ctrl+Shift+B</span> (or <span class="code">Cmd+Shift+B</span> on Mac)</li>
-                        <li><strong>Safari:</strong> View → Show Bookmarks Bar</li>
-                    </ul>
+                    <h3>Show Bookmarks Bar</h3>
+                    <p>Press <strong>Ctrl+Shift+B</strong> (or <strong>Cmd+Shift+B</strong> on Mac)</p>
                 </div>
 
                 <div class="step">
                     <div class="step-number">2</div>
                     <h3>Drag the Bookmarklet</h3>
-                    <p>Drag the "📝 Browser Page Impact" button above to your bookmarks bar. <strong>Don't click it</strong> - just drag it!</p>
+                    <p>Drag the button above to your bookmarks bar</p>
                 </div>
 
                 <div class="step">
                     <div class="step-number">3</div>
                     <h3>First Time Setup</h3>
-                    <p>Click the bookmarklet on any webpage:</p>
-                    <ol>
-                        <li>Sign in with your Google account</li>
-                        <li>Enter your Google Doc ID (one-time setup)</li>
+                    <ul>
+                        <li>Sign in with Google</li>
+                        <li>Enter your Google Doc ID</li>
                         <li>Start adding entries!</li>
-                    </ol>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <h3>Daily Usage</h3>
-                    <p>From any webpage:</p>
-                    <ol>
-                        <li>Click the bookmarklet</li>
-                        <li>Select the month</li>
-                        <li>Enter your title and content</li>
-                        <li>Click "Add Entry"</li>
-                    </ol>
+                    </ul>
                 </div>
             </div>
 
-            <div class="warning">
-                <h4>🔒 Privacy Notice</h4>
-                <p><strong>Your data stays private!</strong> Each user connects to their own private Google Doc. Your entries are saved directly to YOUR document - not shared with anyone else.</p>
-            </div>
-
-            <div class="warning">
-                <h4>📋 Need a Google Doc?</h4>
-                <p>If you don't have a Google Doc yet:</p>
-                <ol style="margin: 8px 0 0 20px;">
+            <div style="background: #fffbeb; border: 1px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 30px 0;">
+                <h4 style="color: #92400e;">📋 Need a Google Doc?</h4>
+                <ol style="margin: 10px 0 0 20px; color: #92400e;">
                     <li>Go to <a href="https://docs.google.com" target="_blank">docs.google.com</a></li>
-                    <li>Create a new document (this will be YOUR private document)</li>
+                    <li>Create a new document</li>
                     <li>Copy the document ID from the URL</li>
-                    <li>The ID is the long string in: <span class="code">docs.google.com/document/d/<strong>DOCUMENT_ID</strong>/edit</span></li>
                 </ol>
             </div>
 
-            <div class="github-link">
-                <a href="https://github.com/vatsal-ships/impactDoc-bookmarklet" class="github-button" target="_blank">
-                    ⭐ View on GitHub
-                </a>
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="https://github.com/vatsal-ships/impactDoc-bookmarklet" style="background: #2d3748; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">⭐ View on GitHub</a>
             </div>
-        </main>
+        </div>
 
-        <footer class="footer">
+        <footer style="text-align: center; color: white; opacity: 0.8; margin-top: 40px;">
             <p>Made with ❤️ for productivity enthusiasts</p>
         </footer>
     </div>
 
     <script>
-        // Prevent accidental clicks on the bookmarklet
-        document.querySelector('.bookmarklet-button').addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('💡 Don\'t click here! Drag this button to your bookmarks bar instead.');
-        });
-
-        // Add some visual feedback for dragging
-        document.querySelector('.bookmarklet-button').addEventListener('dragstart', function(e) {
-            this.style.opacity = '0.8';
-        });
-
-        document.querySelector('.bookmarklet-button').addEventListener('dragend', function(e) {
-            this.style.opacity = '1';
+        document.addEventListener('DOMContentLoaded', function() {
+            const bookmarklet = document.getElementById('bookmarklet');
+            
+            // Load bookmarklet code from the minified file
+            fetch('./bookmarklet-minified.js')
+                .then(response => response.text())
+                .then(code => {
+                    bookmarklet.href = code.trim();
+                })
+                .catch(() => {
+                    bookmarklet.href = 'javascript:alert("Visit the GitHub repository for the latest code!");';
+                });
+            
+            // Prevent clicks
+            bookmarklet.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('💡 Drag this button to your bookmarks bar instead of clicking!');
+            });
         });
     </script>
 </body>
-</html> 
+</html>
