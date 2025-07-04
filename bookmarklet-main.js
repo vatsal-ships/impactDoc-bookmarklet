@@ -10,9 +10,7 @@ window.initImpactDoc = function() {
     const DISCOVERY_DOC = 'https://docs.googleapis.com/$discovery/rest?version=v1';
     const SCOPES = 'https://www.googleapis.com/auth/documents';
 
-    let tokenClient;
     let gapiInited = false;
-    let gisInited = false;
     let masterDocId = localStorage.getItem('browserPageImpact_docId');
 
     const months = [
@@ -288,25 +286,6 @@ window.initImpactDoc = function() {
             gapi.load('client', initializeGapiClient);
         };
         document.head.appendChild(gapiScript);
-
-        // Load Google Identity Services script
-        const gisScript = document.createElement('script');
-        gisScript.src = 'https://accounts.google.com/gsi/client';
-        gisScript.onload = () => {
-            // Initialize with improved configuration
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: '', // defined later
-                // Add configuration to handle redirect URIs better
-                redirect_uri: window.location.origin,
-                ux_mode: 'popup', // Use popup mode to avoid redirect issues
-                include_granted_scopes: true
-            });
-            gisInited = true;
-            maybeEnableButtons();
-        };
-        document.head.appendChild(gisScript);
     }
 
     function initializeGapiClient() {
@@ -323,40 +302,61 @@ window.initImpactDoc = function() {
     }
 
     function maybeEnableButtons() {
-        if (gapiInited && gisInited) {
+        if (gapiInited) {
             authButton.disabled = false;
             showStatus('Ready to authenticate with Google');
         }
     }
 
     function handleAuthClick() {
-        tokenClient.callback = async (resp) => {
-            if (resp.error !== undefined) {
-                console.error('Auth error:', resp);
-                showStatus('Authentication failed: ' + resp.error, true);
+        showStatus('Opening authentication popup...');
+        
+        // Open popup window for authentication from our authorized domain
+        const authUrl = 'https://vatsal-ships.github.io/impactDoc-bookmarklet/auth-popup.html';
+        const popup = window.open(authUrl, 'auth-popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
+        
+        // Listen for authentication result
+        const messageHandler = (event) => {
+            // Verify origin for security
+            if (event.origin !== 'https://vatsal-ships.github.io') {
                 return;
             }
-
-            authSection.style.display = 'none';
-            if (masterDocId) {
-                contentSection.style.display = 'block';
-                showStatus('Successfully authenticated! Ready to add entries.');
-            } else {
-                setupSection.style.display = 'block';
-                showStatus('Successfully authenticated! Please enter your Google Doc ID.');
+            
+            if (event.data.type === 'auth-success') {
+                // Set the token in gapi client
+                gapi.client.setToken({
+                    access_token: event.data.token,
+                    expires_in: event.data.expiresIn
+                });
+                
+                // Update UI
+                authSection.style.display = 'none';
+                if (masterDocId) {
+                    contentSection.style.display = 'block';
+                    showStatus('Successfully authenticated! Ready to add entries.');
+                } else {
+                    setupSection.style.display = 'block';
+                    showStatus('Successfully authenticated! Please enter your Google Doc ID.');
+                }
+                
+                // Clean up
+                window.removeEventListener('message', messageHandler);
+                if (popup && !popup.closed) {
+                    popup.close();
+                }
             }
         };
-
-        tokenClient.error_callback = (error) => {
-            console.error('OAuth error:', error);
-            showStatus('Authentication error: ' + error.type, true);
-        };
-
-        if (gapi.client.getToken() === null) {
-            tokenClient.requestAccessToken({prompt: 'consent'});
-        } else {
-            tokenClient.requestAccessToken({prompt: ''});
-        }
+        
+        window.addEventListener('message', messageHandler);
+        
+        // Handle popup being closed manually
+        const checkClosed = setInterval(() => {
+            if (popup.closed) {
+                clearInterval(checkClosed);
+                window.removeEventListener('message', messageHandler);
+                showStatus('Authentication cancelled');
+            }
+        }, 1000);
     }
 
     async function connectDocument() {

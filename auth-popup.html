@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImpactDoc Authentication</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .status.success {
+            background: #f0fff4;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        .status.loading {
+            background: #ebf8ff;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin: 10px 0;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 ImpactDoc Authentication</h1>
+        <div id="status" class="status loading">
+            Initializing Google authentication...
+        </div>
+        <button id="auth-button" style="display: none;">Sign in with Google</button>
+        <button id="close-button" style="display: none; background: #718096;" onclick="window.close()">Close</button>
+    </div>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    <script>
+        const CLIENT_ID = '267135613225-0q6672a1dl8f3bd1dg123ea2lf1b2er9.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyAWg7PkUqRiBoQOOYlVwQJG6PKuxQqN5cA';
+        const DISCOVERY_DOC = 'https://docs.googleapis.com/$discovery/rest?version=v1';
+        const SCOPES = 'https://www.googleapis.com/auth/documents';
+
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        const statusDiv = document.getElementById('status');
+        const authButton = document.getElementById('auth-button');
+        const closeButton = document.getElementById('close-button');
+
+        function showStatus(message, type = 'loading') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function loadGoogleAPIs() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: [DISCOVERY_DOC],
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        }
+
+        function initializeGis() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '', // defined later
+            });
+            gisInited = true;
+            maybeEnableButtons();
+        }
+
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                authButton.style.display = 'block';
+                showStatus('Ready to authenticate with Google', 'loading');
+            }
+        }
+
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) {
+                    console.error('Auth error:', resp);
+                    showStatus('Authentication failed: ' + resp.error, 'error');
+                    closeButton.style.display = 'block';
+                    return;
+                }
+
+                showStatus('Authentication successful! Sending token to bookmarklet...', 'success');
+                
+                // Send the token back to the parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'auth-success',
+                        token: resp.access_token,
+                        expiresIn: resp.expires_in
+                    }, '*');
+                    
+                    setTimeout(() => {
+                        window.close();
+                    }, 1000);
+                } else {
+                    showStatus('Authentication successful! You can close this window.', 'success');
+                    closeButton.style.display = 'block';
+                }
+            };
+
+            tokenClient.error_callback = (error) => {
+                console.error('OAuth error:', error);
+                showStatus('Authentication error: ' + error.type, 'error');
+                closeButton.style.display = 'block';
+            };
+
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                tokenClient.requestAccessToken({prompt: ''});
+            }
+        }
+
+        // Initialize everything
+        loadGoogleAPIs();
+        
+        // Load Google Identity Services
+        window.onload = () => {
+            if (typeof google !== 'undefined' && google.accounts) {
+                initializeGis();
+            } else {
+                // Retry after a short delay
+                setTimeout(() => {
+                    if (typeof google !== 'undefined' && google.accounts) {
+                        initializeGis();
+                    } else {
+                        showStatus('Failed to load Google authentication. Please refresh.', 'error');
+                        closeButton.style.display = 'block';
+                    }
+                }, 1000);
+            }
+        };
+
+        authButton.addEventListener('click', handleAuthClick);
+    </script>
+</body>
+</html> 
