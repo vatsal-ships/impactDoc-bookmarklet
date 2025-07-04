@@ -503,7 +503,7 @@ window.initImpactDoc = function() {
             const timestamp = new Date().toLocaleString();
             const entry = `\n${timestamp}\n${entryTitle}\n${content}\n\n`;
 
-            // Insert text first
+            // Insert text and format it to ensure normal (non-bold) text style
             await gapi.client.docs.documents.batchUpdate({
                 documentId: masterDocId,
                 resource: {
@@ -513,16 +513,7 @@ window.initImpactDoc = function() {
                                 location: { index: insertIndex },
                                 text: entry
                             }
-                        }
-                    ]
-                }
-            });
-
-            // Then format it to ensure normal text style (not bold)
-            await gapi.client.docs.documents.batchUpdate({
-                documentId: masterDocId,
-                resource: {
-                    requests: [
+                        },
                         {
                             updateTextStyle: {
                                 range: {
@@ -531,6 +522,9 @@ window.initImpactDoc = function() {
                                 },
                                 textStyle: {
                                     bold: false,
+                                    italic: false,
+                                    underline: false,
+                                    strikethrough: false,
                                     fontSize: { magnitude: 11, unit: 'PT' },
                                     foregroundColor: {
                                         color: {
@@ -540,9 +534,21 @@ window.initImpactDoc = function() {
                                                 blue: 0.0
                                             }
                                         }
+                                    },
+                                    weightedFontFamily: {
+                                        fontFamily: 'Arial'
+                                    },
+                                    backgroundColor: {
+                                        color: {
+                                            rgbColor: {
+                                                red: 1.0,
+                                                green: 1.0,
+                                                blue: 1.0
+                                            }
+                                        }
                                     }
                                 },
-                                fields: 'bold,fontSize,foregroundColor'
+                                fields: 'bold,italic,underline,strikethrough,fontSize,foregroundColor,weightedFontFamily,backgroundColor'
                             }
                         }
                     ]

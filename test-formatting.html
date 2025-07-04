@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Formatting Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        .info {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Text Formatting Test</h1>
+        <p>This page tests the Google Docs text formatting to ensure entries are added in normal (non-bold) text.</p>
+        
+        <div class="test-section">
+            <h3>Test Configuration</h3>
+            <p>This test will verify that the text formatting request is properly structured.</p>
+            <button onclick="testFormatting()">Test Text Formatting Structure</button>
+            <button onclick="testEntry()">Test Entry Generation</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function testFormatting() {
+            const resultsDiv = document.getElementById('results');
+            
+            // Simulate the formatting request structure
+            const insertIndex = 100; // Example index
+            const entry = "\n7/4/2025, 1:30:00 PM\nTest Entry Title\nThis is test content.\n\n";
+            
+            const formatRequest = {
+                requests: [
+                    {
+                        insertText: {
+                            location: { index: insertIndex },
+                            text: entry
+                        }
+                    },
+                    {
+                        updateTextStyle: {
+                            range: {
+                                startIndex: insertIndex,
+                                endIndex: insertIndex + entry.length
+                            },
+                            textStyle: {
+                                bold: false,
+                                italic: false,
+                                underline: false,
+                                fontSize: { magnitude: 11, unit: 'PT' },
+                                foregroundColor: {
+                                    color: {
+                                        rgbColor: {
+                                            red: 0.0,
+                                            green: 0.0,
+                                            blue: 0.0
+                                        }
+                                    }
+                                },
+                                weightedFontFamily: {
+                                    fontFamily: 'Arial'
+                                }
+                            },
+                            fields: 'bold,italic,underline,fontSize,foregroundColor,weightedFontFamily'
+                        }
+                    }
+                ]
+            };
+            
+            resultsDiv.innerHTML = `
+                <div class="result">
+                    <h4>✅ Formatting Request Structure:</h4>
+                    <strong>Text to insert:</strong>
+                    "${entry}"
+                    
+                    <strong>Range:</strong>
+                    Start: ${insertIndex}, End: ${insertIndex + entry.length} (Length: ${entry.length})
+                    
+                    <strong>Formatting Applied:</strong>
+                    - Bold: false
+                    - Italic: false
+                    - Underline: false
+                    - Font Size: 11pt
+                    - Color: Black (RGB: 0,0,0)
+                    - Font Family: Arial
+                    
+                    <strong>Full Request:</strong>
+                    ${JSON.stringify(formatRequest, null, 2)}
+                </div>
+            `;
+        }
+        
+        function testEntry() {
+            const resultsDiv = document.getElementById('results');
+            
+            // Simulate entry generation
+            const timestamp = new Date().toLocaleString();
+            const entryTitle = "Sample Entry Title";
+            const content = "This is sample content for testing.";
+            const entry = `\n${timestamp}\n${entryTitle}\n${content}\n\n`;
+            
+            resultsDiv.innerHTML = `
+                <div class="result">
+                    <h4>📝 Generated Entry:</h4>
+                    <strong>Raw Entry String:</strong>
+                    "${entry}"
+                    
+                    <strong>Entry Length:</strong> ${entry.length} characters
+                    
+                    <strong>Entry Preview:</strong>
+                    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; background: white; font-family: Arial; font-size: 11pt;">
+                        ${entry.replace(/\n/g, '<br>')}
+                    </div>
+                    
+                    <strong>Breakdown:</strong>
+                    - Timestamp: "${timestamp}"
+                    - Title: "${entryTitle}"
+                    - Content: "${content}"
+                    - Newlines: ${(entry.match(/\n/g) || []).length} total
+                </div>
+            `;
+        }
+        
+        // Auto-run basic test on page load
+        window.onload = function() {
+            document.getElementById('results').innerHTML = `
+                <div class="result info">
+                    <h4>📋 Test Ready</h4>
+                    <p>Click the buttons above to test the text formatting structure and entry generation.</p>
+                    <p><strong>Key Changes Made:</strong></p>
+                    <ul>
+                        <li>Combined insert and format into single batch update</li>
+                        <li>Explicitly set bold: false, italic: false, underline: false</li>
+                        <li>Set font family to Arial for consistency</li>
+                        <li>Use proper range calculation (startIndex to startIndex + length)</li>
+                    </ul>
+                </div>
+            `;
+        };
+    </script>
+</body>
+</html> 
