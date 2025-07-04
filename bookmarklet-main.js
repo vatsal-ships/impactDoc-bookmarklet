@@ -493,13 +493,35 @@ window.initImpactDoc = function() {
     const setupSection = document.getElementById('setup-section');
     const contentSection = document.getElementById('content-section');
     const authButton = document.getElementById('auth-button');
-    const connectDocButton = document.getElementById('connect-doc-button');
-    const addEntryButton = document.getElementById('add-entry-button');
-    const viewDocButton = document.getElementById('view-doc-button');
-    const changeDocButton = document.getElementById('change-doc-button');
-    const signOutButton = document.getElementById('sign-out-button');
+    const connectDocButton = document.getElementById('connect-doc');
+    const addEntryButton = document.getElementById('add-entry');
+    const viewDocButton = document.getElementById('view-doc');
+    const changeDocButton = document.getElementById('change-doc');
+    const signOutButton = document.getElementById('sign-out');
     const closeButton = document.getElementById('close-dialog');
     const statusDiv = document.getElementById('status');
+
+    // Verify all critical elements exist
+    if (!dialog || !authSection || !setupSection || !contentSection || !authButton || 
+        !connectDocButton || !addEntryButton || !viewDocButton || !changeDocButton || 
+        !signOutButton || !closeButton || !statusDiv) {
+        console.error('Critical dialog elements missing:', {
+            dialog: !!dialog,
+            authSection: !!authSection,
+            setupSection: !!setupSection,
+            contentSection: !!contentSection,
+            authButton: !!authButton,
+            connectDocButton: !!connectDocButton,
+            addEntryButton: !!addEntryButton,
+            viewDocButton: !!viewDocButton,
+            changeDocButton: !!changeDocButton,
+            signOutButton: !!signOutButton,
+            closeButton: !!closeButton,
+            statusDiv: !!statusDiv
+        });
+        alert('ImpactDoc: Failed to initialize dialog. Please refresh and try again.');
+        return;
+    }
 
     // Helper functions
     function closeDialog() {
@@ -1082,21 +1104,27 @@ window.initImpactDoc = function() {
         showStatus('Signed out successfully');
     }
 
-    // Event listeners
-    closeButton.addEventListener('click', closeDialog);
-    authButton.addEventListener('click', handleAuthClick);
-    connectDocButton.addEventListener('click', connectDocument);
-    addEntryButton.addEventListener('click', addEntry);
-    viewDocButton.addEventListener('click', viewDocument);
-    changeDocButton.addEventListener('click', changeDocument);
-    signOutButton.addEventListener('click', signOut);
+    // Event listeners - with error handling
+    try {
+        closeButton.addEventListener('click', closeDialog);
+        authButton.addEventListener('click', handleAuthClick);
+        connectDocButton.addEventListener('click', connectDocument);
+        addEntryButton.addEventListener('click', addEntry);
+        viewDocButton.addEventListener('click', viewDocument);
+        changeDocButton.addEventListener('click', changeDocument);
+        signOutButton.addEventListener('click', signOut);
 
-    // Close dialog when clicking outside
-    dialog.addEventListener('click', (e) => {
-        if (e.target === dialog) {
-            closeDialog();
-        }
-    });
+        // Close dialog when clicking outside
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) {
+                closeDialog();
+            }
+        });
+    } catch (error) {
+        console.error('Error attaching event listeners:', error);
+        alert('ImpactDoc: Failed to initialize event handlers. Please refresh and try again.');
+        return;
+    }
 
     // Initialize with fast-path for authenticated users
     initializeFastPath();
