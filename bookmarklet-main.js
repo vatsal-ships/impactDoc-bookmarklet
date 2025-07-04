@@ -209,6 +209,7 @@ window.initImpactDoc = function() {
     // Store authentication token (fast)
     async function storeToken(token, expiresIn) {
         try {
+            console.log('Storing token with expiration:', expiresIn);
             const tokenData = {
                 access_token: token,
                 expiresAt: Date.now() + (expiresIn * 1000) // Convert seconds to milliseconds
@@ -218,9 +219,15 @@ window.initImpactDoc = function() {
             
             // Store in localStorage immediately (instant)
             localStorage.setItem('browserPageImpact_token', encrypted);
+            console.log('Token stored in localStorage');
             
             // Store in bridge storage in background (non-blocking)
-            setStoredValue('browserPageImpact_token', encrypted);
+            try {
+                await setStoredValue('browserPageImpact_token', encrypted);
+                console.log('Token stored in bridge storage');
+            } catch (e) {
+                console.warn('Failed to store token in bridge storage:', e);
+            }
             
             return true;
         } catch (e) {
@@ -291,7 +298,13 @@ window.initImpactDoc = function() {
                 <button id="close-dialog" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
             </div>
                 
-                <div id="auth-section" style="display: block; text-align: center;">
+                <div id="loading-section" style="display: block; text-align: center;">
+                    <p style="color: #4a5568; margin-bottom: 20px; font-size: 16px;">
+                        Loading...
+                    </p>
+                </div>
+                
+                <div id="auth-section" style="display: none; text-align: center;">
                     <p style="color: #4a5568; margin-bottom: 20px; font-size: 16px;">
                         Connect your Google account to access your private document
                     </p>
@@ -503,53 +516,64 @@ window.initImpactDoc = function() {
 
     // Ultra-fast initialization - localStorage first, bridge as fallback
     async function initializeFastPath() {
+        console.log('Initializing fast path...');
+        
         // Check localStorage immediately (no network delay)
         const localToken = localStorage.getItem('browserPageImpact_token');
         const localDocId = localStorage.getItem('browserPageImpact_docId');
         
-        if (localToken && localDocId) {
-            // Ultra-fast path: Both token and doc ID in localStorage
+        console.log('Local storage check:', { hasToken: !!localToken, hasDocId: !!localDocId });
+        
+        if (localToken) {
+            // Validate token
             try {
                 const decrypted = simpleDecrypt(localToken);
                 if (decrypted) {
                     const parsed = JSON.parse(decrypted);
                     const now = Date.now();
                     
-                    // Check if token is not expired
+                    console.log('Token validation:', { 
+                        hasExpiresAt: !!parsed.expiresAt, 
+                        expiresAt: parsed.expiresAt, 
+                        now: now, 
+                        isExpired: parsed.expiresAt && now >= (parsed.expiresAt - 300000) 
+                    });
+                    
+                    // Check if token is not expired (with 5 minute buffer)
                     if (!parsed.expiresAt || now < (parsed.expiresAt - 300000)) {
+                                            if (localDocId) {
+                        // Both token and doc ID available
                         masterDocId = localDocId;
+                        document.getElementById('loading-section').style.display = 'none';
+                        authSection.style.display = 'none';
                         contentSection.style.display = 'block';
                         showStatus('Ready to add entries!');
                         loadGoogleAPIsBackground();
+                        console.log('Fast path: Ready to add entries');
                         return;
-                    }
-                }
-            } catch (e) {
-                console.warn('Local token validation failed:', e);
-            }
-        }
-        
-        if (localToken) {
-            // User has token but no doc ID
-            try {
-                const decrypted = simpleDecrypt(localToken);
-                if (decrypted) {
-                    const parsed = JSON.parse(decrypted);
-                    const now = Date.now();
-                    
-                    if (!parsed.expiresAt || now < (parsed.expiresAt - 300000)) {
+                    } else {
+                        // Token but no doc ID
+                        document.getElementById('loading-section').style.display = 'none';
+                        authSection.style.display = 'none';
                         setupSection.style.display = 'block';
                         showStatus('Please enter your Google Doc ID');
                         loadGoogleAPIsBackground();
+                        console.log('Fast path: Need doc ID');
                         return;
+                    }
+                    } else {
+                        console.log('Token expired, clearing localStorage');
+                        localStorage.removeItem('browserPageImpact_token');
                     }
                 }
             } catch (e) {
                 console.warn('Local token validation failed:', e);
+                localStorage.removeItem('browserPageImpact_token');
             }
         }
         
         // Try bridge storage with very short timeout (1 second max)
+        console.log('Trying bridge storage...');
         showStatus('Checking authentication...');
         try {
             const timeoutPromise = new Promise((_, reject) => 
@@ -564,22 +588,34 @@ window.initImpactDoc = function() {
             const storedToken = await Promise.race([bridgePromise, timeoutPromise]);
             
             if (storedToken && masterDocId) {
+                document.getElementById('loading-section').style.display = 'none';
+                authSection.style.display = 'none';
                 contentSection.style.display = 'block';
                 showStatus('Ready to add entries!');
                 loadGoogleAPIsBackground();
+                console.log('Bridge path: Ready to add entries');
             } else if (storedToken) {
+                document.getElementById('loading-section').style.display = 'none';
+                authSection.style.display = 'none';
                 setupSection.style.display = 'block';
                 showStatus('Please enter your Google Doc ID');
                 loadGoogleAPIsBackground();
+                console.log('Bridge path: Need doc ID');
             } else {
+                document.getElementById('loading-section').style.display = 'none';
+                authSection.style.display = 'block';
                 authButton.disabled = false;
                 showStatus('Click to authenticate with Google');
+                console.log('Bridge path: Need authentication');
             }
         } catch (error) {
             // Bridge failed or timed out - show auth button
             console.warn('Storage bridge failed:', error);
+            document.getElementById('loading-section').style.display = 'none';
+            authSection.style.display = 'block';
             authButton.disabled = false;
             showStatus('Click to authenticate with Google');
+            console.log('Bridge failed: Need authentication');
         }
     }
     
@@ -669,6 +705,7 @@ window.initImpactDoc = function() {
         const popup = window.open(authUrl, 'auth-popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
         
         // Listen for authentication result
+        let authCompleted = false;
         const messageHandler = async (event) => {
             // Verify origin for security
             if (event.origin !== 'https://vatsal-ships.github.io') {
@@ -676,6 +713,11 @@ window.initImpactDoc = function() {
             }
             
             if (event.data.type === 'auth-success') {
+                authCompleted = true;
+                clearInterval(checkClosed); // Stop checking for popup closure
+                
+                showStatus('Storing authentication...');
+                
                 // Store the token persistently
                 await storeToken(event.data.token, event.data.expiresIn);
                 
@@ -722,9 +764,9 @@ window.initImpactDoc = function() {
         
         window.addEventListener('message', messageHandler);
         
-        // Handle popup being closed manually
+        // Handle popup being closed manually (only if auth not completed)
         const checkClosed = setInterval(() => {
-            if (popup.closed) {
+            if (popup.closed && !authCompleted) {
                 clearInterval(checkClosed);
                 window.removeEventListener('message', messageHandler);
                 showStatus('Authentication cancelled');
