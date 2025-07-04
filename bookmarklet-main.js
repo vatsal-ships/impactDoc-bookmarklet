@@ -230,55 +230,28 @@ window.initImpactDoc = function() {
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    // Create dialog HTML
+    // Create dialog HTML - streamlined for speed
     const dialogHTML = `
         <div id="browser-page-impact-dialog" style="
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 380px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             z-index: 10000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            backdrop-filter: blur(4px);
         ">
-            <div style="
-                background: white;
-                border-radius: 20px;
-                padding: 32px;
-                width: 500px;
-                max-width: 90vw;
-                max-height: 90vh;
-                overflow-y: auto;
-                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-            ">
-                <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 24px;
-                ">
-                    <h2 style="margin: 0; color: #2d3748; font-size: 24px; font-weight: 600;">📝 ImpactDoc</h2>
-                    <button id="close-dialog" style="
-                        background: none;
-                        border: none;
-                        font-size: 28px;
-                        cursor: pointer;
-                        color: #a0aec0;
-                        padding: 0;
-                        width: 32px;
-                        height: 32px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        border-radius: 50%;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.background='#f7fafc'" onmouseout="this.style.background='none'">&times;</button>
-                </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 18px; color: #333;">ImpactDoc</h3>
+                <button id="close-dialog" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666;">×</button>
+            </div>
                 
                 <div id="auth-section" style="display: block; text-align: center;">
                     <p style="color: #4a5568; margin-bottom: 20px; font-size: 16px;">
@@ -490,61 +463,115 @@ window.initImpactDoc = function() {
         statusDiv.style.border = `2px solid ${isError ? '#feb2b2' : '#9ae6b4'}`;
     }
 
-    function loadGoogleAPIs() {
-        // Load Google APIs script
+    // Fast-path initialization - check auth first, load APIs only if needed
+    async function initializeFastPath() {
+        showStatus('Checking authentication...');
+        
+        // Initialize storage and check for existing auth
+        await initializeMasterDocId();
+        const storedToken = await getStoredToken();
+        
+        if (storedToken && masterDocId) {
+            // Fast path: User is authenticated and has document
+            contentSection.style.display = 'block';
+            showStatus('Ready to add entries!');
+            
+            // Load APIs in background for when user needs them
+            loadGoogleAPIsBackground();
+        } else if (storedToken) {
+            // User is authenticated but needs to set up document
+            setupSection.style.display = 'block';
+            showStatus('Please enter your Google Doc ID');
+            
+            // Load APIs in background
+            loadGoogleAPIsBackground();
+        } else {
+            // User needs to authenticate
+            authButton.disabled = false;
+            showStatus('Click to authenticate with Google');
+        }
+    }
+    
+    // Load Google APIs in background (non-blocking)
+    function loadGoogleAPIsBackground() {
+        if (gapiInited) return;
+        
         const gapiScript = document.createElement('script');
         gapiScript.src = 'https://apis.google.com/js/api.js';
         gapiScript.onload = () => {
-            gapi.load('client', initializeGapiClient);
+            gapi.load('client', () => {
+                gapi.client.init({
+                    apiKey: API_KEY,
+                    discoveryDocs: [DISCOVERY_DOC],
+                }).then(() => {
+                    gapiInited = true;
+                    
+                    // Set token if we have one
+                    const storedToken = localStorage.getItem('browserPageImpact_token');
+                    if (storedToken) {
+                        try {
+                            const decrypted = simpleDecrypt(storedToken);
+                            if (decrypted) {
+                                const parsed = JSON.parse(decrypted);
+                                gapi.client.setToken({
+                                    access_token: parsed.access_token
+                                });
+                                isAuthenticated = true;
+                            }
+                        } catch (e) {
+                            console.warn('Failed to set background token:', e);
+                        }
+                    }
+                }).catch((error) => {
+                    console.error('Background API loading failed:', error);
+                });
+            });
+        };
+        gapiScript.onerror = () => {
+            console.error('Failed to load Google APIs');
         };
         document.head.appendChild(gapiScript);
     }
 
-    function initializeGapiClient() {
-        gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: [DISCOVERY_DOC],
-        }).then(async () => {
-            gapiInited = true;
-            await maybeEnableButtons();
-        }).catch((error) => {
-            console.error('Error initializing GAPI client:', error);
-            showStatus('Failed to initialize Google APIs: ' + error.message, true);
+    // Load Google APIs (blocking) - only when user takes action
+    function loadGoogleAPIs() {
+        if (gapiInited) return Promise.resolve();
+        
+        return new Promise((resolve, reject) => {
+            showStatus('Loading Google APIs...');
+            
+            const gapiScript = document.createElement('script');
+            gapiScript.src = 'https://apis.google.com/js/api.js';
+            gapiScript.onload = () => {
+                gapi.load('client', () => {
+                    gapi.client.init({
+                        apiKey: API_KEY,
+                        discoveryDocs: [DISCOVERY_DOC],
+                    }).then(() => {
+                        gapiInited = true;
+                        resolve();
+                    }).catch(reject);
+                });
+            };
+            gapiScript.onerror = () => {
+                reject(new Error('Failed to load Google APIs'));
+            };
+            document.head.appendChild(gapiScript);
         });
     }
 
-    async function maybeEnableButtons() {
-        if (gapiInited) {
-            // Initialize masterDocId first
-            await initializeMasterDocId();
-            
-            // Check if we have a valid stored token
-            const storedToken = await getStoredToken();
-            if (storedToken) {
-                // Set the token in gapi client
-                gapi.client.setToken({
-                    access_token: storedToken.access_token
-                });
-                
-                isAuthenticated = true;
-                authSection.style.display = 'none';
-                
-                if (masterDocId) {
-                    contentSection.style.display = 'block';
-                    showStatus('Welcome back! Ready to add entries.');
-                } else {
-                    setupSection.style.display = 'block';
-                    showStatus('Welcome back! Please enter your Google Doc ID.');
-                }
-            } else {
-                authButton.disabled = false;
-                showStatus('Ready to authenticate with Google');
-            }
-        }
-    }
 
-    function handleAuthClick() {
+
+    async function handleAuthClick() {
         showStatus('Opening authentication popup...');
+        
+        // Ensure Google APIs are loaded
+        try {
+            await loadGoogleAPIs();
+        } catch (error) {
+            showStatus('Failed to load Google APIs: ' + error.message, true);
+            return;
+        }
         
         // Open popup window for authentication from our authorized domain
         const authUrl = 'https://vatsal-ships.github.io/impactDoc-bookmarklet/auth-popup.html';
@@ -611,6 +638,20 @@ window.initImpactDoc = function() {
         showStatus('Verifying document access...');
 
         try {
+            // Ensure Google APIs are loaded
+            if (!gapiInited) {
+                await loadGoogleAPIs();
+                
+                // Set token if we have one
+                const storedToken = await getStoredToken();
+                if (storedToken) {
+                    gapi.client.setToken({
+                        access_token: storedToken.access_token
+                    });
+                    isAuthenticated = true;
+                }
+            }
+            
             await gapi.client.docs.documents.get({
                 documentId: docId
             });
@@ -753,6 +794,20 @@ window.initImpactDoc = function() {
         showStatus('Adding entry to document...');
 
         try {
+            // Ensure Google APIs are loaded
+            if (!gapiInited) {
+                await loadGoogleAPIs();
+                
+                // Set token if we have one
+                const storedToken = await getStoredToken();
+                if (storedToken) {
+                    gapi.client.setToken({
+                        access_token: storedToken.access_token
+                    });
+                    isAuthenticated = true;
+                }
+            }
+            
             const insertIndex = await findOrCreateMonthSection(monthIndex);
             const timestamp = new Date().toLocaleString();
             const entry = `\n${timestamp}\n${entryTitle}\n${content}\n\n`;
@@ -876,7 +931,6 @@ window.initImpactDoc = function() {
         }
     });
 
-    // Initialize
-    showStatus('Loading Google APIs...');
-    loadGoogleAPIs();
+    // Initialize with fast-path for authenticated users
+    initializeFastPath();
 }; 
