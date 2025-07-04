@@ -12,6 +12,50 @@ window.initImpactDoc = function() {
 
     let gapiInited = false;
     let masterDocId = localStorage.getItem('browserPageImpact_docId');
+    let isAuthenticated = false;
+    
+    // Check for stored authentication token
+    function getStoredToken() {
+        const tokenData = localStorage.getItem('browserPageImpact_token');
+        if (!tokenData) return null;
+        
+        try {
+            const parsed = JSON.parse(tokenData);
+            const now = Date.now();
+            
+            // Check if token is expired (with 5 minute buffer)
+            if (parsed.expiresAt && now >= (parsed.expiresAt - 300000)) {
+                localStorage.removeItem('browserPageImpact_token');
+                return null;
+            }
+            
+            return parsed;
+        } catch (e) {
+            localStorage.removeItem('browserPageImpact_token');
+            return null;
+        }
+    }
+    
+    // Store authentication token
+    function storeToken(token, expiresIn) {
+        const tokenData = {
+            access_token: token,
+            expiresAt: Date.now() + (expiresIn * 1000) // Convert seconds to milliseconds
+        };
+        localStorage.setItem('browserPageImpact_token', JSON.stringify(tokenData));
+    }
+    
+    // Handle token expiration
+    function handleTokenExpiration() {
+        localStorage.removeItem('browserPageImpact_token');
+        gapi.client.setToken('');
+        isAuthenticated = false;
+        
+        contentSection.style.display = 'none';
+        setupSection.style.display = 'none';
+        authSection.style.display = 'block';
+        showStatus('Session expired. Please sign in again.', true);
+    }
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -303,8 +347,28 @@ window.initImpactDoc = function() {
 
     function maybeEnableButtons() {
         if (gapiInited) {
-            authButton.disabled = false;
-            showStatus('Ready to authenticate with Google');
+            // Check if we have a valid stored token
+            const storedToken = getStoredToken();
+            if (storedToken) {
+                // Set the token in gapi client
+                gapi.client.setToken({
+                    access_token: storedToken.access_token
+                });
+                
+                isAuthenticated = true;
+                authSection.style.display = 'none';
+                
+                if (masterDocId) {
+                    contentSection.style.display = 'block';
+                    showStatus('Welcome back! Ready to add entries.');
+                } else {
+                    setupSection.style.display = 'block';
+                    showStatus('Welcome back! Please enter your Google Doc ID.');
+                }
+            } else {
+                authButton.disabled = false;
+                showStatus('Ready to authenticate with Google');
+            }
         }
     }
 
@@ -323,11 +387,16 @@ window.initImpactDoc = function() {
             }
             
             if (event.data.type === 'auth-success') {
+                // Store the token persistently
+                storeToken(event.data.token, event.data.expiresIn);
+                
                 // Set the token in gapi client
                 gapi.client.setToken({
                     access_token: event.data.token,
                     expires_in: event.data.expiresIn
                 });
+                
+                isAuthenticated = true;
                 
                 // Update UI
                 authSection.style.display = 'none';
@@ -382,6 +451,13 @@ window.initImpactDoc = function() {
             showStatus('Document connected successfully!');
         } catch (error) {
             console.error('Error accessing document:', error);
+            
+            // Check if it's an authentication error
+            if (error.status === 401 || error.status === 403) {
+                handleTokenExpiration();
+                return;
+            }
+            
             showStatus('Cannot access document. Please check the ID and make sure you have edit access.', true);
         } finally {
             connectDocButton.disabled = false;
@@ -475,6 +551,13 @@ window.initImpactDoc = function() {
             return insertIndex;
         } catch (error) {
             console.error('Error finding/creating month section:', error);
+            
+            // Check if it's an authentication error
+            if (error.status === 401 || error.status === 403) {
+                handleTokenExpiration();
+                throw new Error('Authentication expired');
+            }
+            
             throw error;
         }
     }
@@ -560,6 +643,13 @@ window.initImpactDoc = function() {
             document.getElementById('content-text').value = '';
         } catch (error) {
             console.error('Error adding entry:', error);
+            
+            // Check if it's an authentication error
+            if (error.status === 401 || error.status === 403) {
+                handleTokenExpiration();
+                return;
+            }
+            
             showStatus('Failed to add entry: ' + error.message, true);
         } finally {
             addEntryButton.disabled = false;
@@ -588,6 +678,11 @@ window.initImpactDoc = function() {
             google.accounts.oauth2.revoke(token.access_token);
             gapi.client.setToken('');
         }
+        
+        // Clear stored token
+        localStorage.removeItem('browserPageImpact_token');
+        isAuthenticated = false;
+        
         authSection.style.display = 'block';
         setupSection.style.display = 'none';
         contentSection.style.display = 'none';

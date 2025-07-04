@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Persistent Authentication Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        .bookmarklet {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.2s;
+        }
+        .bookmarklet:hover {
+            background: #38a169;
+        }
+        .warning {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #f0fff4;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #ebf8ff;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        pre {
+            background: #f7fafc;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        .storage-info {
+            background: #f7fafc;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Persistent Authentication Test</h1>
+        
+        <div class="warning">
+            <strong>Testing Purpose:</strong> This page tests that authentication and document connection persist across sessions.
+        </div>
+
+        <div class="test-section">
+            <h2>Test 1: Check Current Storage State</h2>
+            <p>View what's currently stored in localStorage:</p>
+            <button onclick="checkStorage()">Check Storage</button>
+            <button onclick="clearStorage()">Clear All Storage</button>
+            <div id="storage-display" class="storage-info" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 2: First-Time Authentication</h2>
+            <p>Test the bookmarklet when no authentication is stored:</p>
+            <ol>
+                <li>Click "Clear All Storage" above</li>
+                <li>Click the bookmarklet below</li>
+                <li>It should ask for authentication</li>
+                <li>Complete the authentication flow</li>
+                <li>Connect a document ID</li>
+            </ol>
+            <a href="javascript:(function(){var s=document.createElement('script');s.src='https://vatsal-ships.github.io/impactDoc-bookmarklet/bookmarklet-main.js';document.head.appendChild(s);})();" class="bookmarklet">Test Bookmarklet (Production)</a>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 3: Persistent Authentication</h2>
+            <p>Test that authentication persists across sessions:</p>
+            <ol>
+                <li>Complete Test 2 above (authenticate and connect document)</li>
+                <li>Close the bookmarklet dialog</li>
+                <li>Click the bookmarklet again</li>
+                <li>It should skip authentication and go directly to the entry form</li>
+                <li>Try refreshing this page and clicking the bookmarklet</li>
+            </ol>
+            <div class="success">
+                <strong>✅ Expected Result:</strong> After initial authentication, the bookmarklet should remember you and skip the sign-in step.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 4: Cross-Domain Persistence</h2>
+            <p>Test that authentication persists across different websites:</p>
+            <ol>
+                <li>Complete authentication on this page</li>
+                <li>Navigate to a different website (e.g., google.com, github.com)</li>
+                <li>Click the bookmarklet from your bookmarks bar</li>
+                <li>It should remember your authentication and document connection</li>
+            </ol>
+            <div class="info">
+                <strong>📝 Note:</strong> The authentication token is stored in localStorage with the key "browserPageImpact_token" and includes an expiration time.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 5: Token Expiration Handling</h2>
+            <p>Test how the system handles expired tokens:</p>
+            <button onclick="expireToken()">Simulate Token Expiration</button>
+            <div class="warning">
+                <strong>Instructions:</strong>
+                <ol>
+                    <li>Complete authentication first</li>
+                    <li>Click "Simulate Token Expiration" above</li>
+                    <li>Click the bookmarklet</li>
+                    <li>It should detect the expired token and ask for re-authentication</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 6: Sign Out Functionality</h2>
+            <p>Test that signing out clears persistent authentication:</p>
+            <ol>
+                <li>Complete authentication</li>
+                <li>Click "Sign Out" in the bookmarklet</li>
+                <li>Close the bookmarklet dialog</li>
+                <li>Click the bookmarklet again</li>
+                <li>It should ask for authentication again</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>Technical Details</h2>
+            <pre>
+Storage Keys:
+- browserPageImpact_token: Stores authentication token with expiration
+- browserPageImpact_docId: Stores connected Google Doc ID
+
+Token Structure:
+{
+  "access_token": "ya29.a0...",
+  "expiresAt": 1625097600000  // Unix timestamp
+}
+
+Expiration Handling:
+- Tokens are checked for expiration with 5-minute buffer
+- Expired tokens are automatically removed from storage
+- API calls with expired tokens trigger re-authentication
+            </pre>
+        </div>
+
+        <div id="test-results" style="margin-top: 30px; padding: 20px; background: #f7fafc; border-radius: 8px; display: none;">
+            <h3>Test Results:</h3>
+            <div id="results-content"></div>
+        </div>
+    </div>
+
+    <script>
+        function checkStorage() {
+            const token = localStorage.getItem('browserPageImpact_token');
+            const docId = localStorage.getItem('browserPageImpact_docId');
+            
+            const display = document.getElementById('storage-display');
+            display.style.display = 'block';
+            
+            let html = '<h4>Current Storage State:</h4>';
+            
+            if (token) {
+                try {
+                    const tokenData = JSON.parse(token);
+                    const expiresAt = new Date(tokenData.expiresAt);
+                    const now = new Date();
+                    const isExpired = now >= expiresAt;
+                    
+                    html += `<div><strong>Token:</strong> ${tokenData.access_token.substring(0, 20)}...</div>`;
+                    html += `<div><strong>Expires:</strong> ${expiresAt.toLocaleString()} ${isExpired ? '(EXPIRED)' : '(Valid)'}</div>`;
+                } catch (e) {
+                    html += `<div><strong>Token:</strong> Invalid format</div>`;
+                }
+            } else {
+                html += '<div><strong>Token:</strong> Not stored</div>';
+            }
+            
+            if (docId) {
+                html += `<div><strong>Document ID:</strong> ${docId}</div>`;
+            } else {
+                html += '<div><strong>Document ID:</strong> Not stored</div>';
+            }
+            
+            display.innerHTML = html;
+        }
+        
+        function clearStorage() {
+            localStorage.removeItem('browserPageImpact_token');
+            localStorage.removeItem('browserPageImpact_docId');
+            showTestResult('✅ All storage cleared');
+            checkStorage();
+        }
+        
+        function expireToken() {
+            const token = localStorage.getItem('browserPageImpact_token');
+            if (token) {
+                try {
+                    const tokenData = JSON.parse(token);
+                    tokenData.expiresAt = Date.now() - 1000; // Set to 1 second ago
+                    localStorage.setItem('browserPageImpact_token', JSON.stringify(tokenData));
+                    showTestResult('✅ Token expired (set to 1 second ago)');
+                    checkStorage();
+                } catch (e) {
+                    showTestResult('❌ Failed to expire token: Invalid format');
+                }
+            } else {
+                showTestResult('❌ No token to expire');
+            }
+        }
+        
+        function showTestResult(message) {
+            const resultsDiv = document.getElementById('test-results');
+            const contentDiv = document.getElementById('results-content');
+            
+            resultsDiv.style.display = 'block';
+            contentDiv.innerHTML += '<div style="margin: 10px 0; padding: 10px; background: white; border-radius: 4px;">' + message + '</div>';
+        }
+        
+        // Auto-check storage on page load
+        window.addEventListener('load', checkStorage);
+    </script>
+</body>
+</html> 
