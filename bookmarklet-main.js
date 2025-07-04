@@ -544,7 +544,10 @@ window.initImpactDoc = function() {
         const forceShowAuth = setTimeout(() => {
             console.warn('Fast path timeout - forcing auth screen');
             try {
-                document.getElementById('loading-section').style.display = 'none';
+                const loadingSection = document.getElementById('loading-section');
+                if (loadingSection) {
+                    loadingSection.style.display = 'none';
+                }
                 authSection.style.display = 'block';
                 authButton.disabled = false;
                 showStatus('Click to authenticate with Google');
@@ -580,7 +583,8 @@ window.initImpactDoc = function() {
                         // Both token and doc ID available
                         clearTimeout(forceShowAuth);
                         masterDocId = localDocId;
-                        document.getElementById('loading-section').style.display = 'none';
+                        const loadingSection1 = document.getElementById('loading-section');
+                        if (loadingSection1) loadingSection1.style.display = 'none';
                         authSection.style.display = 'none';
                         contentSection.style.display = 'block';
                         showStatus('Ready to add entries!');
@@ -590,7 +594,8 @@ window.initImpactDoc = function() {
                     } else {
                         // Token but no doc ID
                         clearTimeout(forceShowAuth);
-                        document.getElementById('loading-section').style.display = 'none';
+                        const loadingSection2 = document.getElementById('loading-section');
+                        if (loadingSection2) loadingSection2.style.display = 'none';
                         authSection.style.display = 'none';
                         setupSection.style.display = 'block';
                         showStatus('Please enter your Google Doc ID');
@@ -626,7 +631,8 @@ window.initImpactDoc = function() {
             
             if (storedToken && masterDocId) {
                 clearTimeout(forceShowAuth);
-                document.getElementById('loading-section').style.display = 'none';
+                const loadingSection3 = document.getElementById('loading-section');
+                if (loadingSection3) loadingSection3.style.display = 'none';
                 authSection.style.display = 'none';
                 contentSection.style.display = 'block';
                 showStatus('Ready to add entries!');
@@ -634,7 +640,8 @@ window.initImpactDoc = function() {
                 console.log('Bridge path: Ready to add entries');
             } else if (storedToken) {
                 clearTimeout(forceShowAuth);
-                document.getElementById('loading-section').style.display = 'none';
+                const loadingSection4 = document.getElementById('loading-section');
+                if (loadingSection4) loadingSection4.style.display = 'none';
                 authSection.style.display = 'none';
                 setupSection.style.display = 'block';
                 showStatus('Please enter your Google Doc ID');
@@ -642,7 +649,8 @@ window.initImpactDoc = function() {
                 console.log('Bridge path: Need doc ID');
             } else {
                 clearTimeout(forceShowAuth);
-                document.getElementById('loading-section').style.display = 'none';
+                const loadingSection5 = document.getElementById('loading-section');
+                if (loadingSection5) loadingSection5.style.display = 'none';
                 authSection.style.display = 'block';
                 authButton.disabled = false;
                 showStatus('Click to authenticate with Google');
@@ -652,7 +660,8 @@ window.initImpactDoc = function() {
             // Bridge failed or timed out - show auth button
             console.warn('Storage bridge failed:', error);
             clearTimeout(forceShowAuth);
-            document.getElementById('loading-section').style.display = 'none';
+            const loadingSection6 = document.getElementById('loading-section');
+            if (loadingSection6) loadingSection6.style.display = 'none';
             authSection.style.display = 'block';
             authButton.disabled = false;
             showStatus('Click to authenticate with Google');
@@ -1126,6 +1135,23 @@ window.initImpactDoc = function() {
         return;
     }
 
-    // Initialize with fast-path for authenticated users
-    initializeFastPath();
+    // Initialize with fast-path for authenticated users - with small delay to ensure DOM is ready
+    setTimeout(() => {
+        try {
+            initializeFastPath();
+        } catch (error) {
+            console.error('Error during initialization:', error);
+                         // Fallback to showing auth section
+             try {
+                 const loadingSection7 = document.getElementById('loading-section');
+                 if (loadingSection7) loadingSection7.style.display = 'none';
+                 authSection.style.display = 'block';
+                 authButton.disabled = false;
+                 showStatus('Click to authenticate with Google');
+             } catch (e) {
+                 console.error('Fallback initialization failed:', e);
+                 alert('ImpactDoc: Failed to initialize. Please refresh and try again.');
+             }
+        }
+    }, 10); // Very small delay to ensure DOM is ready
 }; 
