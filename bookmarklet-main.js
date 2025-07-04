@@ -111,18 +111,26 @@ window.initImpactDoc = function() {
         });
     }
 
-    // Robust cross-domain storage functions
+    // Fast storage functions - localStorage first, bridge as backup
     async function getStoredValue(key) {
         try {
-            // First try localStorage (fast for same domain)
+            // Always try localStorage first (instant)
             const localValue = localStorage.getItem(key);
             if (localValue) {
                 return localValue;
             }
             
-            // Then try universal bridge storage
-            await initStorageBridge();
-            return await sendStorageMessage('get', key);
+            // Try bridge storage with short timeout (500ms max)
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Bridge timeout')), 500)
+            );
+            
+            const bridgePromise = (async () => {
+                await initStorageBridge();
+                return await sendStorageMessage('get', key);
+            })();
+            
+            return await Promise.race([bridgePromise, timeoutPromise]);
         } catch (e) {
             console.warn('Storage get failed:', e);
             return null;
@@ -131,12 +139,19 @@ window.initImpactDoc = function() {
 
     async function setStoredValue(key, value) {
         try {
-            // Store in localStorage (fast for same domain)
+            // Always store in localStorage (instant)
             localStorage.setItem(key, value);
             
-            // Also store in universal bridge storage
-            await initStorageBridge();
-            await sendStorageMessage('set', key, value);
+            // Try to store in bridge storage (non-blocking)
+            (async () => {
+                try {
+                    await initStorageBridge();
+                    await sendStorageMessage('set', key, value);
+                } catch (e) {
+                    console.warn('Bridge storage set failed:', e);
+                }
+            })();
+            
             return true;
         } catch (e) {
             console.warn('Storage set failed:', e);
@@ -146,12 +161,19 @@ window.initImpactDoc = function() {
 
     async function removeStoredValue(key) {
         try {
-            // Remove from localStorage
+            // Always remove from localStorage (instant)
             localStorage.removeItem(key);
             
-            // Remove from universal bridge storage
-            await initStorageBridge();
-            await sendStorageMessage('remove', key);
+            // Try to remove from bridge storage (non-blocking)
+            (async () => {
+                try {
+                    await initStorageBridge();
+                    await sendStorageMessage('remove', key);
+                } catch (e) {
+                    console.warn('Bridge storage remove failed:', e);
+                }
+            })();
+            
             return true;
         } catch (e) {
             console.warn('Storage remove failed:', e);
@@ -184,7 +206,7 @@ window.initImpactDoc = function() {
         }
     }
     
-    // Store authentication token
+    // Store authentication token (fast)
     async function storeToken(token, expiresIn) {
         try {
             const tokenData = {
@@ -193,7 +215,13 @@ window.initImpactDoc = function() {
             };
             
             const encrypted = simpleEncrypt(JSON.stringify(tokenData));
-            await setStoredValue('browserPageImpact_token', encrypted);
+            
+            // Store in localStorage immediately (instant)
+            localStorage.setItem('browserPageImpact_token', encrypted);
+            
+            // Store in bridge storage in background (non-blocking)
+            setStoredValue('browserPageImpact_token', encrypted);
+            
             return true;
         } catch (e) {
             console.warn('Store token failed:', e);
@@ -201,12 +229,22 @@ window.initImpactDoc = function() {
         }
     }
     
-    // Initialize masterDocId from storage
+    // Initialize masterDocId from storage (fast)
     async function initializeMasterDocId() {
         try {
+            // Check localStorage first (instant)
+            const localDocId = localStorage.getItem('browserPageImpact_docId');
+            if (localDocId) {
+                masterDocId = localDocId;
+                return;
+            }
+            
+            // Try bridge storage with timeout
             const docId = await getStoredValue('browserPageImpact_docId');
             if (docId) {
                 masterDocId = docId;
+                // Store in localStorage for next time
+                localStorage.setItem('browserPageImpact_docId', docId);
             }
         } catch (e) {
             console.warn('Initialize master doc ID failed:', e);
@@ -463,30 +501,83 @@ window.initImpactDoc = function() {
         statusDiv.style.border = `2px solid ${isError ? '#feb2b2' : '#9ae6b4'}`;
     }
 
-    // Fast-path initialization - check auth first, load APIs only if needed
+    // Ultra-fast initialization - localStorage first, bridge as fallback
     async function initializeFastPath() {
+        // Check localStorage immediately (no network delay)
+        const localToken = localStorage.getItem('browserPageImpact_token');
+        const localDocId = localStorage.getItem('browserPageImpact_docId');
+        
+        if (localToken && localDocId) {
+            // Ultra-fast path: Both token and doc ID in localStorage
+            try {
+                const decrypted = simpleDecrypt(localToken);
+                if (decrypted) {
+                    const parsed = JSON.parse(decrypted);
+                    const now = Date.now();
+                    
+                    // Check if token is not expired
+                    if (!parsed.expiresAt || now < (parsed.expiresAt - 300000)) {
+                        masterDocId = localDocId;
+                        contentSection.style.display = 'block';
+                        showStatus('Ready to add entries!');
+                        loadGoogleAPIsBackground();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('Local token validation failed:', e);
+            }
+        }
+        
+        if (localToken) {
+            // User has token but no doc ID
+            try {
+                const decrypted = simpleDecrypt(localToken);
+                if (decrypted) {
+                    const parsed = JSON.parse(decrypted);
+                    const now = Date.now();
+                    
+                    if (!parsed.expiresAt || now < (parsed.expiresAt - 300000)) {
+                        setupSection.style.display = 'block';
+                        showStatus('Please enter your Google Doc ID');
+                        loadGoogleAPIsBackground();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('Local token validation failed:', e);
+            }
+        }
+        
+        // Try bridge storage with very short timeout (1 second max)
         showStatus('Checking authentication...');
-        
-        // Initialize storage and check for existing auth
-        await initializeMasterDocId();
-        const storedToken = await getStoredToken();
-        
-        if (storedToken && masterDocId) {
-            // Fast path: User is authenticated and has document
-            contentSection.style.display = 'block';
-            showStatus('Ready to add entries!');
+        try {
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Storage bridge timeout')), 1000)
+            );
             
-            // Load APIs in background for when user needs them
-            loadGoogleAPIsBackground();
-        } else if (storedToken) {
-            // User is authenticated but needs to set up document
-            setupSection.style.display = 'block';
-            showStatus('Please enter your Google Doc ID');
+            const bridgePromise = (async () => {
+                await initializeMasterDocId();
+                return await getStoredToken();
+            })();
             
-            // Load APIs in background
-            loadGoogleAPIsBackground();
-        } else {
-            // User needs to authenticate
+            const storedToken = await Promise.race([bridgePromise, timeoutPromise]);
+            
+            if (storedToken && masterDocId) {
+                contentSection.style.display = 'block';
+                showStatus('Ready to add entries!');
+                loadGoogleAPIsBackground();
+            } else if (storedToken) {
+                setupSection.style.display = 'block';
+                showStatus('Please enter your Google Doc ID');
+                loadGoogleAPIsBackground();
+            } else {
+                authButton.disabled = false;
+                showStatus('Click to authenticate with Google');
+            }
+        } catch (error) {
+            // Bridge failed or timed out - show auth button
+            console.warn('Storage bridge failed:', error);
             authButton.disabled = false;
             showStatus('Click to authenticate with Google');
         }
