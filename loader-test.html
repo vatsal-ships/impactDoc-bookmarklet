@@ -101,6 +101,7 @@
         <div class="info">
             <h4>🔧 New Approach: Dynamic Loading</h4>
             <p>This bookmarklet is much smaller and loads the main code dynamically from GitHub Pages.</p>
+            <p><strong>Note:</strong> This localhost version shows a test dialog only. For full Google OAuth functionality, use the GitHub Pages version.</p>
         </div>
         
         <div class="size-comparison">
@@ -163,12 +164,12 @@
     </div>
 
     <script>
-        // Load the loader bookmarklet
-        fetch('./bookmarklet-loader.js')
+        // Load the localhost loader bookmarklet
+        fetch('./bookmarklet-loader-localhost.js')
             .then(response => response.text())
             .then(code => {
                 document.getElementById('loader-bookmarklet').href = code.trim();
-                console.log('✅ Loader bookmarklet loaded:', code.length, 'bytes');
+                console.log('✅ Localhost loader bookmarklet loaded:', code.length, 'bytes');
             })
             .catch(error => {
                 console.error('❌ Failed to load loader bookmarklet:', error);
@@ -184,7 +185,7 @@
             }
             
             const script = document.createElement('script');
-            script.src = './bookmarklet-main.js'; // Use local version for testing
+            script.src = './bookmarklet-main-localhost.js'; // Use localhost test version
             script.onload = function() {
                 console.log('✅ Main script loaded');
                 if (window.initImpactDoc) {
