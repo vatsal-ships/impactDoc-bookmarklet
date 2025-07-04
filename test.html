@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmarklet Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .test-button:hover {
+            background: #3367d6;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .instructions {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 16px;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Browser Page Impact Bookmarklet Test</h1>
+    
+    <div class="instructions">
+        <h3>🔧 Setup Required First</h3>
+        <p>Before testing, make sure you've:</p>
+        <ol>
+            <li>Set up Google Cloud Console project</li>
+            <li>Enabled Google Docs API</li>
+            <li>Created OAuth 2.0 credentials</li>
+            <li>Added <code>http://localhost:8000</code> to authorized JavaScript origins</li>
+            <li>Updated the CLIENT_ID and API_KEY in bookmarklet.js</li>
+        </ol>
+    </div>
+
+    <div class="warning">
+        <h3>⚠️ Important</h3>
+        <p>This test page needs to be served over HTTP (not file://). Use the Python server command below.</p>
+    </div>
+
+    <h2>Testing Methods</h2>
+
+    <h3>Method 1: Direct Code Execution</h3>
+    <p>Click the button below to test the bookmarklet directly:</p>
+    <button class="test-button" onclick="loadBookmarklet()">Test Bookmarklet</button>
+
+    <h3>Method 2: Console Testing</h3>
+    <p>Open browser console (F12) and paste the bookmarklet code, then press Enter.</p>
+
+    <h3>Method 3: Create Actual Bookmarklet</h3>
+    <p>Copy the minified code below and create a bookmark with this as the URL:</p>
+    <div class="code-block" id="minified-code">
+        Loading minified code...
+    </div>
+    <button class="test-button" onclick="copyMinifiedCode()">Copy Minified Code</button>
+
+    <h2>Start Local Server</h2>
+    <p>Run this command in your terminal from the project directory:</p>
+    <div class="code-block">
+        # Python 3
+        python -m http.server 8000
+
+        # Python 2
+        python -m SimpleHTTPServer 8000
+
+        # Node.js (if you have npx)
+        npx http-server -p 8000
+
+        # Then visit: http://localhost:8000/test.html
+    </div>
+
+    <h2>Test Content</h2>
+    <p>Use this sample content to test the bookmarklet:</p>
+    <div class="code-block">
+        Entry Title: Project Planning Meeting
+        
+        Content:
+        ## Project Planning Meeting - [Date]
+        
+        **Attendees:**
+        - Team Lead
+        - Developer
+        - Designer
+        
+        **Key Discussion Points:**
+        1. Timeline and milestones
+        2. Resource allocation
+        3. Technical requirements
+        
+        **Action Items:**
+        - [ ] Finalize project scope
+        - [ ] Set up development environment
+        - [ ] Create initial mockups
+        
+        **Next Steps:**
+        Schedule follow-up meeting for next week.
+    </div>
+
+    <h2>How It Works</h2>
+    <div class="instructions">
+        <h3>📋 Monthly Organization</h3>
+        <p>The bookmarklet now works with a single Google Doc that has sections for each month:</p>
+        <ul>
+            <li><strong>First Time:</strong> Create a new document with month sections, or use an existing one</li>
+            <li><strong>Select Month:</strong> Choose which month to add your entry to</li>
+            <li><strong>Add Entry:</strong> Your content gets added to the selected month section</li>
+            <li><strong>Automatic Timestamps:</strong> Each entry includes when it was added</li>
+        </ul>
+    </div>
+
+    <script>
+        // Load the bookmarklet code
+        function loadBookmarklet() {
+            // Create script element to load the bookmarklet
+            const script = document.createElement('script');
+            script.src = './bookmarklet.js';
+            script.onload = function() {
+                console.log('Bookmarklet loaded successfully');
+            };
+            script.onerror = function() {
+                alert('Failed to load bookmarklet.js. Make sure the file exists and the server is running.');
+            };
+            document.head.appendChild(script);
+        }
+
+        // Generate and display minified code
+        function generateMinifiedCode() {
+            fetch('./bookmarklet.js')
+                .then(response => response.text())
+                .then(code => {
+                    // Simple minification (remove comments and extra whitespace)
+                    const minified = code
+                        .replace(/\/\*[\s\S]*?\*\//g, '') // Remove /* */ comments
+                        .replace(/\/\/.*$/gm, '') // Remove // comments
+                        .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+                        .trim();
+                    
+                    const bookmarkletCode = 'javascript:' + encodeURIComponent(minified);
+                    document.getElementById('minified-code').textContent = bookmarkletCode;
+                })
+                .catch(error => {
+                    document.getElementById('minified-code').textContent = 'Error loading bookmarklet.js: ' + error.message;
+                });
+        }
+
+        // Copy minified code to clipboard
+        function copyMinifiedCode() {
+            const codeElement = document.getElementById('minified-code');
+            const code = codeElement.textContent;
+            
+            if (code.startsWith('javascript:')) {
+                navigator.clipboard.writeText(code).then(() => {
+                    alert('Minified code copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = code;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Minified code copied to clipboard!');
+                });
+            } else {
+                alert('Please wait for the minified code to load first.');
+            }
+        }
+
+        // Generate minified code on page load
+        generateMinifiedCode();
+    </script>
+</body>
+</html> 
