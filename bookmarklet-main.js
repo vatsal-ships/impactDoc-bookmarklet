@@ -518,6 +518,19 @@ window.initImpactDoc = function() {
     async function initializeFastPath() {
         console.log('Initializing fast path...');
         
+        // Aggressive timeout to ensure loading never hangs
+        const forceShowAuth = setTimeout(() => {
+            console.warn('Fast path timeout - forcing auth screen');
+            try {
+                document.getElementById('loading-section').style.display = 'none';
+                authSection.style.display = 'block';
+                authButton.disabled = false;
+                showStatus('Click to authenticate with Google');
+            } catch (e) {
+                console.error('Error showing auth section:', e);
+            }
+        }, 1000); // 1 second max
+        
         // Check localStorage immediately (no network delay)
         const localToken = localStorage.getItem('browserPageImpact_token');
         const localDocId = localStorage.getItem('browserPageImpact_docId');
@@ -543,6 +556,7 @@ window.initImpactDoc = function() {
                     if (!parsed.expiresAt || now < (parsed.expiresAt - 300000)) {
                                             if (localDocId) {
                         // Both token and doc ID available
+                        clearTimeout(forceShowAuth);
                         masterDocId = localDocId;
                         document.getElementById('loading-section').style.display = 'none';
                         authSection.style.display = 'none';
@@ -553,6 +567,7 @@ window.initImpactDoc = function() {
                         return;
                     } else {
                         // Token but no doc ID
+                        clearTimeout(forceShowAuth);
                         document.getElementById('loading-section').style.display = 'none';
                         authSection.style.display = 'none';
                         setupSection.style.display = 'block';
@@ -588,6 +603,7 @@ window.initImpactDoc = function() {
             const storedToken = await Promise.race([bridgePromise, timeoutPromise]);
             
             if (storedToken && masterDocId) {
+                clearTimeout(forceShowAuth);
                 document.getElementById('loading-section').style.display = 'none';
                 authSection.style.display = 'none';
                 contentSection.style.display = 'block';
@@ -595,6 +611,7 @@ window.initImpactDoc = function() {
                 loadGoogleAPIsBackground();
                 console.log('Bridge path: Ready to add entries');
             } else if (storedToken) {
+                clearTimeout(forceShowAuth);
                 document.getElementById('loading-section').style.display = 'none';
                 authSection.style.display = 'none';
                 setupSection.style.display = 'block';
@@ -602,6 +619,7 @@ window.initImpactDoc = function() {
                 loadGoogleAPIsBackground();
                 console.log('Bridge path: Need doc ID');
             } else {
+                clearTimeout(forceShowAuth);
                 document.getElementById('loading-section').style.display = 'none';
                 authSection.style.display = 'block';
                 authButton.disabled = false;
@@ -611,6 +629,7 @@ window.initImpactDoc = function() {
         } catch (error) {
             // Bridge failed or timed out - show auth button
             console.warn('Storage bridge failed:', error);
+            clearTimeout(forceShowAuth);
             document.getElementById('loading-section').style.display = 'none';
             authSection.style.display = 'block';
             authButton.disabled = false;
