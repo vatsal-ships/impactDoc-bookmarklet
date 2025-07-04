@@ -501,7 +501,7 @@ window.initImpactDoc = function() {
         try {
             const insertIndex = await findOrCreateMonthSection(monthIndex);
             const timestamp = new Date().toLocaleString();
-            const entry = `\n${entryTitle}\n${timestamp}\n${content}\n\n`;
+            const entry = `\n${timestamp}\n${entryTitle}\n${content}\n\n`;
 
             await gapi.client.docs.documents.batchUpdate({
                 documentId: masterDocId,
