@@ -78,12 +78,12 @@ window.initImpactDoc = function() {
             
             document.body.appendChild(storageBridge);
             
-            // Timeout after 10 seconds
+            // Timeout after 2 seconds (much shorter for faster fallback)
             setTimeout(() => {
                 if (pendingStorageRequests.size === 0) return; // Already resolved
-                window.removeEventListener('message, messageHandler');
+                window.removeEventListener('message', messageHandler);
                 reject(new Error('Storage bridge timeout'));
-            }, 10000);
+            }, 2000);
         });
     }
 
@@ -572,12 +572,12 @@ window.initImpactDoc = function() {
             }
         }
         
-        // Try bridge storage with very short timeout (1 second max)
+        // Try bridge storage with very short timeout (500ms max)
         console.log('Trying bridge storage...');
         showStatus('Checking authentication...');
         try {
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Storage bridge timeout')), 1000)
+                setTimeout(() => reject(new Error('Storage bridge timeout')), 500)
             );
             
             const bridgePromise = (async () => {
