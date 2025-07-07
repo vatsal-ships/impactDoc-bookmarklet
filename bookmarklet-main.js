@@ -31,6 +31,14 @@ window.initImpactDoc = function() {
         }
     }
     
+    // Local development detection
+    function isLocalDevelopment() {
+        return window.location.protocol === 'file:' || 
+               window.location.hostname === 'localhost' || 
+               window.location.hostname === '127.0.0.1' ||
+               window.location.hostname.endsWith('.local');
+    }
+    
     // Universal cross-domain storage using GitHub Pages as bridge
     const STORAGE_BRIDGE_URL = 'https://vatsal-ships.github.io/impactDoc-bookmarklet/storage-bridge.html';
     let storageBridge = null;
@@ -120,6 +128,12 @@ window.initImpactDoc = function() {
                 return localValue;
             }
             
+            // Skip bridge storage in local development
+            if (isLocalDevelopment()) {
+                console.log('🔧 Local development detected, skipping bridge storage');
+                return null;
+            }
+            
             // Try bridge storage with short timeout (500ms max)
             const timeoutPromise = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error('Bridge timeout')), 500)
@@ -142,6 +156,12 @@ window.initImpactDoc = function() {
             // Always store in localStorage (instant)
             localStorage.setItem(key, value);
             
+            // Skip bridge storage in local development
+            if (isLocalDevelopment()) {
+                console.log('🔧 Local development detected, using localStorage only');
+                return true;
+            }
+            
             // Try to store in bridge storage (non-blocking)
             (async () => {
                 try {
@@ -163,6 +183,12 @@ window.initImpactDoc = function() {
         try {
             // Always remove from localStorage (instant)
             localStorage.removeItem(key);
+            
+            // Skip bridge storage in local development
+            if (isLocalDevelopment()) {
+                console.log('🔧 Local development detected, using localStorage only');
+                return true;
+            }
             
             // Try to remove from bridge storage (non-blocking)
             (async () => {
