@@ -1180,4 +1180,11 @@ window.initImpactDoc = function() {
              }
         }
     }, 10); // Very small delay to ensure DOM is ready
-}; 
+};
+
+// Script integrity check
+if (typeof window.initImpactDoc === 'function') {
+    console.log('✅ ImpactDoc script loaded successfully');
+} else {
+    console.error('❌ ImpactDoc script failed to load properly');
+}
