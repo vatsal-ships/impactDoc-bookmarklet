@@ -3,7 +3,7 @@ if(document.getElementById('browser-page-impact-dialog')){return;}
 if(window.impactDocLoading){console.warn('ImpactDoc already loading');return;}
 window.impactDocLoading=true;
 var s=document.createElement('script');
-s.src='https://vatsal-ships.github.io/impactDoc-bookmarklet/bookmarklet-main.js?v='+(Date.now());
+s.src='https://vatsal-ships.github.io/impactDoc-bookmarklet/bookmarklet-main-mini.js?v='+(Date.now());
 s.onload=function(){
 try{
 window.impactDocLoading=false;
