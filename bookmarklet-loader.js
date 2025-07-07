@@ -1,4 +1,23 @@
 javascript:(function(){
+try{
+if(location.protocol==='chrome:'||location.protocol==='chrome-extension:'||location.protocol==='moz-extension:'){
+alert('ImpactDoc cannot run on browser special pages.\\nPlease navigate to a website (like google.com) first, then try again.');
+return;
+}
+if(location.protocol==='about:'||location.href==='about:blank'){
+alert('ImpactDoc cannot run on empty pages.\\nPlease navigate to a website first, then try again.');
+return;
+}
+if(location.hostname==='newtab'||location.href.includes('chrome://newtab')){
+alert('ImpactDoc cannot run on Chrome new tab pages.\\nPlease navigate to a website (like google.com) first, then try again.');
+return;
+}
+}catch(e){
+try{
+alert('ImpactDoc cannot run on this page type.\\nPlease navigate to a regular website first, then try again.');
+}catch(e2){}
+return;
+}
 if(document.getElementById('browser-page-impact-dialog')){return;}
 if(window.impactDocLoading){console.warn('ImpactDoc already loading');return;}
 window.impactDocLoading=true;
