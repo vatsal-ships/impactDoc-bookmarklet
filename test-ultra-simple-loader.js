@@ -1,1 +1,0 @@
-javascript:(function(){var s=document.createElement('script');s.src='https://vatsal-ships.github.io/impactDoc-bookmarklet/test-ultra-simple.js?v='+Date.now();s.onload=function(){window.testUltraSimple();};s.onerror=function(){alert('Failed');};document.head.appendChild(s);})(); 
