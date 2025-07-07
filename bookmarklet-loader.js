@@ -2,6 +2,29 @@ javascript:(function(){
 if(document.getElementById('browser-page-impact-dialog')){return;}
 if(window.impactDocLoading){console.warn('ImpactDoc already loading');return;}
 window.impactDocLoading=true;
+function ensureDOM(){
+try{
+if(!document.documentElement){return false;}
+if(!document.head){
+var head=document.createElement('head');
+document.documentElement.appendChild(head);
+}
+if(!document.body){
+var body=document.createElement('body');
+document.documentElement.appendChild(body);
+}
+return true;
+}catch(e){
+console.error('DOM creation failed:',e);
+return false;
+}
+}
+function loadScript(){
+if(!ensureDOM()){
+window.impactDocLoading=false;
+alert('ImpactDoc: Cannot run on this page type');
+return;
+}
 var s=document.createElement('script');
 s.src='https://vatsal-ships.github.io/impactDoc-bookmarklet/bookmarklet-main-mini.js?v='+(Date.now());
 s.onload=function(){
@@ -23,4 +46,10 @@ window.impactDocLoading=false;
 alert('Failed to load ImpactDoc. Please check your internet connection.');
 };
 document.head.appendChild(s);
+}
+if(document.readyState==='loading'){
+document.addEventListener('DOMContentLoaded',loadScript);
+}else{
+loadScript();
+}
 })(); 
