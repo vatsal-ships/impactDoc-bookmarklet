@@ -943,7 +943,7 @@ window.initImpactDoc = function() {
                 showStatus(`Creating ${selectedMonth} section...`);
                 insertIndex = content[content.length - 1].endIndex - 1;
                 
-                const monthSection = `\n${monthHeader}\n${'─'.repeat(50)}\n\n`;
+                const monthSection = `\n${monthHeader}\n${'═'.repeat(70)}\n\n`;
                 
                 await gapi.client.docs.documents.batchUpdate({
                     documentId: masterDocId,
