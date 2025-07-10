@@ -1125,7 +1125,6 @@ window.initImpactDoc = function() {
     async function signOut() {
         const token = gapi.client.getToken();
         if (token !== null) {
-            google.accounts.oauth2.revoke(token.access_token);
             gapi.client.setToken('');
         }
         

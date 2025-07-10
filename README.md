@@ -148,10 +148,9 @@ February 2024
 ### Entry Types
 
 Perfect for tracking:
-- 📝 Meeting notes and action items
+- Impact Doc for mastery
 - 🔍 Research findings and insights
 - 💡 Ideas and inspiration
-- 📚 Learning resources and references
 - 🎯 Goals and progress updates
 
 ## 🔒 Security & Privacy
@@ -199,22 +198,10 @@ Perfect for tracking:
 4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Google Docs API for document integration
-- Google OAuth for secure authentication
-- Modern web standards for cross-browser compatibility
-
 ## 📞 Support
 
 - 🐛 [Report Issues](https://github.com/vatsal-ships/impactDoc-bookmarklet/issues)
 - 💬 [Discussions](https://github.com/vatsal-ships/impactDoc-bookmarklet/discussions)
-- 📧 Email: support@vatsalpatel.com
+- 📧 Email: vatsal.patel@shopify.com
 
 ---
-
-**⭐ Star this repository if you find it useful!** 
