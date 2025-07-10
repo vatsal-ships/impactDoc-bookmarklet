@@ -1,6 +1,6 @@
-# 📝 Browser Page Impact Bookmarklet
+# 📝 Impact Bookmarklet
 
-A powerful bookmarklet that lets you quickly add entries to your Google Docs tracking document from any webpage. Perfect for tracking ideas, notes, research, or any content you encounter while browsing.
+A powerful bookmarklet that lets you quickly add entries to your Google Docs tracking document from any webpage. Perfect for tracking ideas, impact, notes, research, or any content you encounter while browsing.
 
 ## 🚀 Live Demo & Installation
 
