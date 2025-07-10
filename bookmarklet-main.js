@@ -902,8 +902,9 @@ window.initImpactDoc = function() {
     }
 
     async function findOrCreateMonthSection(monthIndex) {
+        const currentYear = new Date().getFullYear();
         const selectedMonth = months[monthIndex];
-        const monthHeader = selectedMonth; // Just the month name, e.g., "June"
+        const monthHeader = `${selectedMonth} ${currentYear}`; // Month and year, e.g., "June 2024"
 
         try {
             const doc = await gapi.client.docs.documents.get({
@@ -918,13 +919,13 @@ window.initImpactDoc = function() {
             for (let i = 0; i < content.length; i++) {
                 if (content[i].paragraph && content[i].paragraph.elements) {
                     const text = content[i].paragraph.elements[0].textRun?.content || '';
-                    if (text.trim() === monthHeader) {
+                    if (text.includes(monthHeader)) {
                         monthExists = true;
                         // Find insertion point after this month header
                         for (let j = i + 1; j < content.length; j++) {
                             if (content[j].paragraph && content[j].paragraph.elements) {
                                 const nextText = content[j].paragraph.elements[0].textRun?.content || '';
-                                if (months.some(month => nextText.trim() === month && nextText.trim() !== monthHeader)) {
+                                if (months.some(month => nextText.includes(`${month} ${currentYear}`) && !nextText.includes(monthHeader))) {
                                     insertIndex = content[j].startIndex;
                                     break;
                                 }
