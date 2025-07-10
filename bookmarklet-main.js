@@ -945,6 +945,7 @@ window.initImpactDoc = function() {
                 
                 const monthSection = `\n${monthHeader}\n\n`;
                 
+                // Insert text and format in a single batch operation
                 await gapi.client.docs.documents.batchUpdate({
                     documentId: masterDocId,
                     resource: {
@@ -954,16 +955,7 @@ window.initImpactDoc = function() {
                                     location: { index: insertIndex },
                                     text: monthSection
                                 }
-                            }
-                        ]
-                    }
-                });
-
-                // Format the month header
-                await gapi.client.docs.documents.batchUpdate({
-                    documentId: masterDocId,
-                    resource: {
-                        requests: [
+                            },
                             {
                                 updateTextStyle: {
                                     range: {
